@@ -1,0 +1,25 @@
+player_number,last_name,gps_name,position,aliases,active
+2,Tzolakis,Tzolakis,Goalkeeper,,true
+3,Vlachodimos,Vlachodimos,Goalkeeper,,true
+4,Mandas,Mandas,Goalkeeper,,true
+5,Vagiannidis,Vagiannidis,Full Back,,true
+6,Tsimikas,Tsimikas,Full Back,,true
+7,Rota,Rota,Full Back,,true
+8,Mavropanos,Mavropanos,Central Defender,,true
+9,Koulierakis,Koulierakis,Central Defender,,true
+10,Hatzidiakos,Hatzidiakos,Central Defender,,true
+11,Retsos,Retsos,Central Defender,,true
+12,Kiriakopoulos,Kiriakopoulos,Full Back,,true
+13,Kourbelis,Kourbelis,Defensive Midfielder,,true
+14,Zafeiris,Zafeiris,Defensive Midfielder,,true
+15,Siopis,Siopis,Defensive Midfielder,,true
+16,Mouzakitis,Mouzakitis,Defensive Midfielder,,true
+17,Bakasetas,Bakasetas,Offensive Midfielder,,true
+18,Mantalos,Mantalos,Offensive Midfielder,,true
+19,Konstantelias,Konstantelias,Offensive Midfielder,,true
+20,Pelkas,Pelkas,Offensive Midfielder,,true
+21,Karetsas,Karetsas,Winger,,true
+22,Tzolis,Tzolis,Winger,,true
+23,Masouras,Masouras,Winger,,true
+24,Pavlidis,Pavlidis,Striker,,true
+25,Ioannidis,Ioannidis,Striker,,true
