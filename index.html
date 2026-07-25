@@ -3216,6 +3216,12 @@ function formatDateShort(s) {
 
 function normWS(s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' '); }
 
+/* Club-lookup (achternaam -> club), gevuld uit players.csv bij laden. Houdt het
+   dashboard team-agnostisch: vervang players.csv om voor een ander team te labelen. */
+const CLUB_BY_PLAYER = {};
+function normClub(x){ return String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+function acwrClubHtml(player){ var c = CLUB_BY_PLAYER[normClub(player)]; return c ? '<span class="pl-club">' + monoEsc(c) + '</span>' : ''; }
+
 /* ---------- CSV loading ---------- */
 function loadCSV() {
   const wrap = document.getElementById('tableWrapper');
@@ -3228,6 +3234,19 @@ function loadCSV() {
   const cacheBuster = Math.floor(Date.now() / 30000);
   const csvUrl = DEFAULT_CSV_PATH + '?v=' + cacheBuster;
 
+  // Laad eerst de club-lookup (players.csv) zodat de ACWR-tabel elke speler van
+  // een club kan voorzien; ga daarna hoe dan ook door met de hoofd-parse.
+  Papa.parse('shared/data/players.csv?v=' + cacheBuster, {
+    download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim(),
+    complete: (pr) => { try { (pr.data || []).forEach(row => {
+        var cl = row.club; if (!cl) return;
+        if (row.gps_name)  CLUB_BY_PLAYER[normClub(row.gps_name)]  = cl;
+        if (row.last_name) CLUB_BY_PLAYER[normClub(row.last_name)] = cl;
+      }); } catch (e) {} startMainCsvParse(); },
+    error: () => { startMainCsvParse(); }
+  });
+
+  function startMainCsvParse() {
   Papa.parse(csvUrl, {
     download: true,
     header: true,
@@ -3245,6 +3264,7 @@ function loadCSV() {
       wrap.innerHTML = '<div class="error-msg">⚠ Could not load ' + DEFAULT_CSV_PATH + ': ' + escapeHTML(err.message) + '</div>';
     }
   });
+  }
 }
 
 /* Session-type corrections — fixes wrong values in the source CSV without
@@ -7266,7 +7286,7 @@ function renderAcwr() {
       ? '<td class="acwr-na">n/a</td>'
       : '<td class="acwr-cell ' + r.level.cls + '">' + r.ratio.toFixed(2) + '</td>';
     html += '<tr>'
-      + '<td class="pl-name">' + monoEsc(r.player) + '</td>'
+      + '<td class="pl-name">' + monoEsc(r.player) + acwrClubHtml(r.player) + '</td>'
       + '<td class="acwr-pos" style="background:' + pxHexToRgba(pxPositionColor(r.position), 0.30)
           + ';box-shadow:inset 3px 0 0 ' + pxPositionColor(r.position) + '">' + monoEsc(r.position || '—') + '</td>'
       + '<td>' + r.trainDays + '</td>'
@@ -9322,6 +9342,7 @@ html, body{ background:#071A3A !important; }
 /* ---- ACWR-tabel ---- */
 .acwr-card .dr-table tbody td:first-child{ color:#FFFFFF !important; font-weight:700 !important; }
 .acwr-card .dr-table tbody td.acwr-pos{ color:#EAF2FF !important; font-weight:700 !important; }
+.pl-club{ display:block; font-size:10px; font-weight:400; color:#9DB9E6; margin-top:2px; letter-spacing:.01em; }
 
 .acwr-card .acwr-cell, .acwr-card .acwr-status,
 td.acwr-cell, td.acwr-status{
