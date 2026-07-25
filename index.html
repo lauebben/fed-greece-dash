@@ -3219,8 +3219,9 @@ function normWS(s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' 
 /* Club-lookup (achternaam -> club), gevuld uit players.csv bij laden. Houdt het
    dashboard team-agnostisch: vervang players.csv om voor een ander team te labelen. */
 const CLUB_BY_PLAYER = {};
+const SYS_BY_PLAYER = {};
 function normClub(x){ return String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
-function acwrClubHtml(player){ var c = CLUB_BY_PLAYER[normClub(player)]; return c ? '<span class="pl-club">' + monoEsc(c) + '</span>' : ''; }
+function acwrClubHtml(player){ var k = normClub(player); var c = CLUB_BY_PLAYER[k]; if (!c) return ''; var sys = SYS_BY_PLAYER[k]; return '<span class="pl-club">' + monoEsc(c) + (sys ? ' <span class="pl-sys">\u00B7 ' + monoEsc(sys) + '</span>' : '') + '</span>'; }
 
 /* ---------- CSV loading ---------- */
 function loadCSV() {
@@ -3240,8 +3241,9 @@ function loadCSV() {
     download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim(),
     complete: (pr) => { try { (pr.data || []).forEach(row => {
         var cl = row.club; if (!cl) return;
-        if (row.gps_name)  CLUB_BY_PLAYER[normClub(row.gps_name)]  = cl;
-        if (row.last_name) CLUB_BY_PLAYER[normClub(row.last_name)] = cl;
+        var sy = row.gps_system || '';
+        if (row.gps_name)  { CLUB_BY_PLAYER[normClub(row.gps_name)]  = cl; if (sy) SYS_BY_PLAYER[normClub(row.gps_name)]  = sy; }
+        if (row.last_name) { CLUB_BY_PLAYER[normClub(row.last_name)] = cl; if (sy) SYS_BY_PLAYER[normClub(row.last_name)] = sy; }
       }); } catch (e) {} startMainCsvParse(); },
     error: () => { startMainCsvParse(); }
   });
@@ -9343,6 +9345,7 @@ html, body{ background:#071A3A !important; }
 .acwr-card .dr-table tbody td:first-child{ color:#FFFFFF !important; font-weight:700 !important; }
 .acwr-card .dr-table tbody td.acwr-pos{ color:#EAF2FF !important; font-weight:700 !important; }
 .pl-club{ display:block; font-size:10px; font-weight:400; color:#9DB9E6; margin-top:2px; letter-spacing:.01em; }
+.pl-sys{ color:#5EAAFF; }
 
 .acwr-card .acwr-cell, .acwr-card .acwr-status,
 td.acwr-cell, td.acwr-status{
