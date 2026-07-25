@@ -1,34 +1,34 @@
 player_number,last_name,gps_name,position,aliases,active,club,gps_system
-2,Tzolakis,Tzolakis,Goalkeeper,,true,Olympiacos,
-3,Vlachodimos,Vlachodimos,Goalkeeper,,true,Sevilla,
+2,Tzolakis,Tzolakis,Goalkeeper,,true,Olympiacos,StatSports
+3,Vlachodimos,Vlachodimos,Goalkeeper,,true,Sevilla,KINEXON
 4,Mandas,Mandas,Goalkeeper,,true,Bournemouth,Catapult
 5,Vagiannidis,Vagiannidis,Full Back,,true,Sporting CP,StatSports
-6,Tsimikas,Tsimikas,Full Back,,true,AS Roma,
-7,Rota,Rota,Full Back,,true,AEK Athens,
+6,Tsimikas,Tsimikas,Full Back,,true,AS Roma,StatSports
+7,Rota,Rota,Full Back,,true,AEK Athens,StatSports
 8,Mavropanos,Mavropanos,Central Defender,,true,West Ham,StatSports
 9,Koulierakis,Koulierakis,Central Defender,,true,Wolfsburg,KINEXON
-10,Hatzidiakos,Hatzidiakos,Central Defender,,true,FC Copenhagen,
-11,Retsos,Retsos,Central Defender,,true,Olympiacos,
+10,Hatzidiakos,Hatzidiakos,Central Defender,,true,FC Copenhagen,StatSports
+11,Retsos,Retsos,Central Defender,,true,Olympiacos,StatSports
 12,Kiriakopoulos,Kiriakopoulos,Full Back,,true,Panathinaikos,StatSports
 13,Kourbelis,Kourbelis,Defensive Midfielder,,true,Al-Khaleej,Catapult
 14,Zafeiris,Zafeiris,Defensive Midfielder,,true,PAOK,StatSports
 15,Siopis,Siopis,Defensive Midfielder,,true,Panathinaikos,StatSports
-16,Mouzakitis,Mouzakitis,Defensive Midfielder,,true,Olympiacos,
+16,Mouzakitis,Mouzakitis,Defensive Midfielder,,true,Olympiacos,StatSports
 17,Bakasetas,Bakasetas,Offensive Midfielder,,true,Panathinaikos,StatSports
-18,Mantalos,Mantalos,Offensive Midfielder,,true,AEK Athens,
+18,Mantalos,Mantalos,Offensive Midfielder,,true,AEK Athens,StatSports
 19,Konstantelias,Konstantelias,Offensive Midfielder,,true,PAOK,StatSports
 20,Pelkas,Pelkas,Offensive Midfielder,,true,PAOK,StatSports
-21,Karetsas,Karetsas,Winger,,true,Genk,
+21,Karetsas,Karetsas,Winger,,true,Genk,StatSports
 22,Tzolis,Tzolis,Winger,,true,Club Brugge,StatSports
 23,Masouras,Masouras,Winger,,true,Al-Khaleej,Catapult
-24,Pavlidis,Pavlidis,Striker,,true,Benfica,Playermaker
+24,Pavlidis,Pavlidis,Striker,,true,Benfica,StatSports
 25,Ioannidis,Ioannidis,Striker,,true,Sporting CP,StatSports
 26,Tetteh,Tetteh,Striker,,true,Panathinaikos,StatSports
 27,Kostoulas,Kostoulas,Striker,,true,Brighton,Catapult
 28,Triantis,Triantis,Defensive Midfielder,,true,Minnesota United,Catapult
-29,Giannoulis,Giannoulis,Full Back,,true,Augsburg,
+29,Giannoulis,Giannoulis,Full Back,,true,Augsburg,KINEXON
 30,Douvikas,Douvikas,Striker,,true,Como,StatSports
 31,Tsiftsis,Tsiftsis,Goalkeeper,,true,PAOK,StatSports
 32,Ntoi,Ntoi,Central Defender,,true,Rio Ave,Catapult
-33,Androutsos,Androutsos,Full Back,,true,OFI Crete,
+33,Androutsos,Androutsos,Full Back,,true,OFI Crete,Iterpro Sports
 34,Kyziridis,Kyziridis,Winger,,true,Hearts,StatSports
