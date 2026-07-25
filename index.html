@@ -3041,6 +3041,7 @@ const COL = {
   sessionType: 'Session Type',
   sessionWeek: 'Session Week Number',
   sessionTitle: 'Session Title',
+  team:      'Unnamed: 89',
   drillTitle: 'Drill Title',
   totalTime: 'Total Time',
   td:        'Total Distance',
@@ -3323,6 +3324,7 @@ function ingest(rawRows) {
       sessionType: applySessionTypeOverride(dateObj, normWS(r[COL.sessionType])),
       week: normWS(r[COL.sessionWeek]),
       sessionTitle: normWS(r[COL.sessionTitle]),
+      team: normWS(r[COL.team]),
       drill,
       date,
       dateObj,
@@ -3871,6 +3873,13 @@ function preserveDrillsAcrossDateChange() {
   if (state.selectedDrills.size === 0) initDefaultDrills();
 }
 
+/* Team-bron (club of nationale ploeg) voor een datum — alle rijen van een dag
+   horen bij hetzelfde team. Wordt achter elke drill in de slicer getoond. */
+function getTeamForDate(date){
+  for (const r of state.rows){ if (r.date === date && r.team) return r.team; }
+  return '';
+}
+
 function populateDrillOptions() {
   const available = [...getDrillsForCurrentDate()].sort((a, b) => a.localeCompare(b));
   document.getElementById('drillAvailableInfo').textContent = available.length + ' available';
@@ -3893,7 +3902,8 @@ function populateDrillOptions() {
     });
     const txt = document.createElement('span');
     txt.className = 'opt-label';
-    txt.textContent = d;
+    const _team = getTeamForDate(state.selectedDate);
+    txt.textContent = _team ? (d + '  \u00B7  ' + _team) : d;
     lbl.appendChild(cb);
     lbl.appendChild(txt);
     container.appendChild(lbl);
