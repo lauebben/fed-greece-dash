@@ -3792,17 +3792,22 @@ function populateDateSelect() {
   sel.value = state.selectedDate;
 }
 
+/* Drill-opties zijn per (drill, club/team): elke club krijgt een eigen filterbare
+   drill; een selectie lekt niet door clubs heen op dagen met meerdere clubs. */
+const DRILL_SEP = '\u001f';
+function drillKey(r){ return r.drill + DRILL_SEP + (r.team || ''); }
+
 function getDrillsForCurrentDate() {
   // Drills available on the currently selected date (drives the multi-select content).
   // "Entire Session" is a rollup row and is never offered in the slicer.
   const set = new Set();
   for (const r of state.rows) {
-    if (r.date === state.selectedDate && !isEntireSessionDrill(r.drill)) set.add(r.drill);
+    if (r.date === state.selectedDate && !isEntireSessionDrill(r.drill)) set.add(drillKey(r));
   }
   if (set.size === 0) {
     // Fallback: a day that contains nothing but rollup rows — show what there is.
     for (const r of state.rows) {
-      if (r.date === state.selectedDate) set.add(r.drill);
+      if (r.date === state.selectedDate) set.add(drillKey(r));
     }
   }
   return set;
@@ -3902,8 +3907,8 @@ function populateDrillOptions() {
     });
     const txt = document.createElement('span');
     txt.className = 'opt-label';
-    const _team = getTeamForDate(state.selectedDate);
-    txt.textContent = _team ? (d + '  \u00B7  ' + _team) : d;
+    var _p = String(d).split(DRILL_SEP);
+    txt.textContent = _p[1] ? (_p[0] + '  \u00B7  ' + _p[1]) : _p[0];
     lbl.appendChild(cb);
     lbl.appendChild(txt);
     container.appendChild(lbl);
@@ -3919,7 +3924,7 @@ function updateDrillTriggerLabel() {
   const pill = document.getElementById('drillCount');
 
   if (count === 0)              label.textContent = 'No drills selected';
-  else if (count === 1)         label.textContent = [...state.selectedDrills][0];
+  else if (count === 1)         { var _k=[...state.selectedDrills][0].split(DRILL_SEP); label.textContent = _k[1] ? (_k[0]+' \u00B7 '+_k[1]) : _k[0]; }
   else if (count === total)     label.textContent = 'All drills';
   else                          label.textContent = count + ' drills selected';
   pill.textContent = count;
@@ -4004,7 +4009,7 @@ function buildTableData() {
       });
     }
     const p = players.get(r.player);
-    if (selDrills.has(r.drill)) p.currentRows.push(r);
+    if (selDrills.has(drillKey(r))) p.currentRows.push(r);
     if (!p.rowsByDrillToday.has(r.drill)) p.rowsByDrillToday.set(r.drill, []);
     p.rowsByDrillToday.get(r.drill).push(r);
   }
@@ -4244,7 +4249,7 @@ function render() {
   const totalDrills = getDrillsForCurrentDate().size;
   let drillSummary = '—';
   if (drillCount === 0) drillSummary = 'None';
-  else if (drillCount === 1) drillSummary = [...state.selectedDrills][0];
+  else if (drillCount === 1) { var _k=[...state.selectedDrills][0].split(DRILL_SEP); drillSummary = _k[1] ? (_k[0]+' \u00B7 '+_k[1]) : _k[0]; }
   else if (drillCount === totalDrills) drillSummary = 'All (' + drillCount + ')';
   else drillSummary = drillCount + ' selected';
   document.getElementById('metaDrills').textContent = drillSummary;
@@ -4526,7 +4531,7 @@ function buildHighSpeedData() {
   const players = new Map();
   for (const r of state.rows) {
     if (r.date !== date) continue;
-    if (!selDrills.has(r.drill)) continue;
+    if (!selDrills.has(drillKey(r))) continue;
     if (!players.has(r.player)) {
       players.set(r.player, {
         player: r.player,
@@ -6250,7 +6255,7 @@ document.getElementById('drillSelectAll').addEventListener('click', () => {
 });
 document.getElementById('drillSelectEntire').addEventListener('click', () => {
   const available = getDrillsForCurrentDate();
-  const entire = [...available].find(d => d.toLowerCase() === 'entire session');
+  const entire = [...available].find(d => String(d).split(DRILL_SEP)[0].toLowerCase() === 'entire session');
   state.selectedDrills = new Set();
   if (entire) state.selectedDrills.add(entire);
   populateDrillOptions();
