@@ -7926,9 +7926,15 @@ function ppSeasonCalendar(player) {
       const v = Number.isFinite(s.tot.td) ? s.tot.td : 0;
       const a = 0.16 + 0.84 * Math.min(v / maxTd, 1);
       fill = 'rgba(120, 160, 220,' + a.toFixed(3) + ')';
-      if (s.isMatch) stroke = ' stroke="#5EAAFF" stroke-width="2"';
-      tip = fmtDLong(t) + (s.sessionType ? ' · ' + s.sessionType : '')
-        + ' · TD ' + fmtNum(v, 0) + ' m';
+      if (s.isMatch) {
+        stroke = ' stroke="#FFCC33" stroke-width="2.4"';
+        var _mrow = null;
+        try { var _rr = state.rowsByPlayerDate.get(player).get(s.date); if (_rr) _mrow = _rr.find(function(rr){ return isMatchDayRow(rr) && isEntireSessionDrill(rr.drill); }); } catch(e){}
+        var _mn = _mrow ? (fmtNum(_mrow.time, 0) + ' min played') : '';
+        tip = (_mrow && _mrow.sessionTitle ? _mrow.sessionTitle : 'Match day') + (_mn ? ' · ' + _mn : '') + ' · ' + fmtDLong(t);
+      } else {
+        tip = fmtDLong(t) + (s.sessionType ? ' · ' + s.sessionType : '') + ' · TD ' + fmtNum(v, 0) + ' m';
+      }
     } else {
       tip = fmtDLong(t) + ' · no session';
     }
@@ -7939,7 +7945,7 @@ function ppSeasonCalendar(player) {
   return '<div class="pp-cal-wrap"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H
     + '" xmlns="http://www.w3.org/2000/svg" role="img">' + svg + '</svg></div>'
     + '<div class="pp-cal-note">Each square = one day · darker = higher Total Distance (player max '
-    + fmtNum(maxTd, 0) + ' m) · <span style="display:inline-block;width:9px;height:9px;border:2px solid #5EAAFF;border-radius:2px;vertical-align:-1px"></span> = match day'
+    + fmtNum(maxTd, 0) + ' m) · <span style="display:inline-block;width:9px;height:9px;border:2px solid #FFCC33;border-radius:2px;vertical-align:-1px"></span> = match day'
     + ' · grey = no session' + (capped ? ' · showing the most recent ' + PP_CAL_MAX_WEEKS + ' weeks' : '')
     + ' · hover a square for the details</div>';
 }
@@ -8165,11 +8171,11 @@ function ppCrossModule(player){
     if(_pairs.length>=6){ var _srt=_pairs.slice().sort(function(a,b){return b[0]-a[0];}); var _t=Math.max(1,Math.round(_pairs.length/3)); var _hi=_srt.slice(0,_t), _lo=_srt.slice(-_t); var _mh=_hi.reduce(function(a,b){return a+b[1];},0)/_hi.length; var _ml=_lo.reduce(function(a,b){return a+b[1];},0)/_lo.length; wlV=fmtNum(_mh,0); wlS='hi-load \u00B7 vs '+fmtNum(_ml,0)+' low'; } }
   var lastMs = lastM? (fmtNum(lastM.time,0)+' min') : '\u2013';
   var lastMsub = lastM? ((lastM.team||'')+' \u00B7 '+formatDateShort(lastM.date)) : '';
-  function card(v,l,sub){ return '<div class="ppx-cell"><b>'+v+'</b><small>'+l+'</small>'+(sub?'<em>'+sub+'</em>':'')+'</div>'; }
+  function card(v,l,sub,cls){ return '<div class="ppx-cell'+(cls?' '+cls:'')+'"><b>'+v+'</b><small>'+l+'</small>'+(sub?'<em>'+sub+'</em>':'')+'</div>'; }
   return '<div class="ppx-grid">'
     + card(fmtNum(natMin+clubMin,0), 'Match min (season)', 'nat '+fmtNum(natMin,0)+' \u00B7 club '+fmtNum(clubMin,0))
     + card(lastMs, 'Last match', lastMsub)
-    + card(clubName||'\u2013', 'Club', clubMin?('season '+fmtNum(clubMin,0)+' min'):'')
+    + card(clubName||'\u2013', 'Club', clubMin?('season '+fmtNum(clubMin,0)+' min'):'', 'ppx-txt')
     + card(cmjV, 'CMJ jump height', cmjS)
     + card(wV, 'Readiness', wS)
     + card(rV, 's:RPE (latest)', rS)
@@ -8178,27 +8184,26 @@ function ppCrossModule(player){
     + '</div>';
 }
 
+var ppLoadMetric='td';
+function ppSetLoadMetric(m){ ppLoadMetric=m; try{ document.getElementById('ppLoad').innerHTML=ppLoadSource(ppCurrentPlayer); }catch(e){} }
 function ppLoadSource(player){
+  var METRICS={ td:{f:function(r){return Number(r.td)||0;},unit:'km',div:1000,dec:1,label:'TD'},
+                hsr:{f:function(r){return Number(r.hsr)||0;},unit:'m',div:1,dec:0,label:'HSR'},
+                min:{f:function(r){return Number(r.time)||0;},unit:'min',div:1,dec:0,label:'Min'},
+                hml:{f:function(r){return Number(r.efforts)||0;},unit:'',div:1,dec:0,label:'HML'} };
+  var mk=(typeof ppLoadMetric!=='undefined' && METRICS[ppLoadMetric])?ppLoadMetric:'td';
+  var M=METRICS[mk];
   var rows=(state.rows||[]).filter(function(r){return r.player===player && !isEntireSessionDrill(r.drill) && r.dateObj;});
   if(!rows.length) return '<div class="empty-state" style="padding:10px">No load data.</div>';
   var maxT=Math.max.apply(null, rows.map(function(r){return r.dateObj.getTime();}));
   var cutoff=maxT-27*86400000;
-  var agg={club:{td:0,min:0,days:{}}, nat:{td:0,min:0,days:{}}};
-  rows.forEach(function(r){
-    if(r.dateObj.getTime()<cutoff) return;
-    var cat=((r.team||'')==='Nat Team')?'nat':'club';
-    agg[cat].td+=Number(r.td)||0; agg[cat].min+=Number(r.time)||0; agg[cat].days[r.date]=1;
-  });
-  var ct=agg.club.td, nt=agg.nat.td, tot=(ct+nt)||1;
-  function bar(label,val,color,days,mins){
-    var pct=Math.round(val/tot*100);
-    return '<div class="ppl-row"><span class="ppl-lab">'+label+'</span>'
-      +'<span class="ppl-track"><span class="ppl-fill" style="width:'+pct+'%;background:'+color+'"></span></span>'
-      +'<span class="ppl-val">'+fmtNum(val/1000,1)+' km</span></div>'
-      +'<div class="ppl-sub">'+Object.keys(days).length+' days \u00B7 '+fmtNum(mins,0)+' min \u00B7 '+pct+'%</div>';
-  }
-  return bar('Club', ct, '#0E6BA8', agg.club.days, agg.club.min)
-       + bar('Nat Team', nt, '#5EAAFF', agg.nat.days, agg.nat.min);
+  var agg={club:{v:0,min:0,days:{}}, nat:{v:0,min:0,days:{}}};
+  rows.forEach(function(r){ if(r.dateObj.getTime()<cutoff) return; var cat=((r.team||'')==='Nat Team')?'nat':'club'; agg[cat].v+=M.f(r); agg[cat].min+=Number(r.time)||0; agg[cat].days[r.date]=1; });
+  var cv=agg.club.v, nv=agg.nat.v, tot=(cv+nv)||1;
+  var pills=Object.keys(METRICS).map(function(k){ return '<button type="button" class="ppl-pill'+(k===mk?' on':'')+'" data-m="'+k+'" onclick="ppSetLoadMetric(this.dataset.m)">'+METRICS[k].label+'</button>'; }).join('');
+  function bar(label,val,color,days,mins){ var pct=Math.round(val/tot*100); var disp=(M.div>1)?fmtNum(val/M.div,M.dec):fmtNum(val,M.dec);
+    return '<div class="ppl-row"><span class="ppl-lab">'+label+'</span><span class="ppl-track"><span class="ppl-fill" style="width:'+pct+'%;background:'+color+'"></span></span><span class="ppl-val">'+disp+(M.unit?' '+M.unit:'')+'</span></div><div class="ppl-sub">'+Object.keys(days).length+' days \u00B7 '+fmtNum(mins,0)+' min \u00B7 '+pct+'%</div>'; }
+  return '<div class="ppl-metrics">'+pills+'</div>'+bar('Club',cv,'#0E6BA8',agg.club.days,agg.club.min)+bar('Nat Team',nv,'#5EAAFF',agg.nat.days,agg.nat.min);
 }
 
 function openPlayerProfile(player, comparePlayer) {
@@ -9445,7 +9450,7 @@ html, body{ background:#071A3A !important; }
 .pl-sys{ color:#5EAAFF; }
 .ppx-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:10px; padding:4px 0 2px; }
 .ppx-cell{ background:#0C2C5A; border:1px solid #1E4E8C; border-radius:10px; padding:10px 12px; }
-.ppx-cell b{ display:block; font-size:18px; color:#EAF2FF; font-weight:800; line-height:1.1; }
+.ppx-cell b{ display:block; font-size:18px; color:#EAF2FF; font-weight:800; line-height:1.1; overflow-wrap:anywhere; }
 .ppx-cell small{ display:block; font-size:10px; color:#9DB9E6; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
 .ppx-cell em{ display:block; font-size:11px; color:#5EAAFF; font-style:normal; margin-top:3px; }
 .ppx-flag{ border-color:#d64545 !important; background:#3a1720 !important; }
@@ -9457,6 +9462,10 @@ html, body{ background:#071A3A !important; }
 .ppl-fill{ display:block; height:100%; border-radius:7px; }
 .ppl-val{ width:66px; text-align:right; font-size:12px; color:#EAF2FF; font-weight:700; }
 .ppl-sub{ font-size:10px; color:#9DB9E6; margin:2px 0 0 84px; }
+.ppl-metrics{ display:flex; gap:6px; margin:0 0 8px; flex-wrap:wrap; }
+.ppl-pill{ background:#0A2E5C; color:#fff; border:1px solid #4C8FD6; border-radius:14px; padding:3px 12px; font-size:11px; font-family:inherit; cursor:pointer; }
+.ppl-pill.on{ background:#5EAAFF; color:#0A1F44; border-color:#5EAAFF; font-weight:700; }
+.ppx-txt b{ font-size:14px; overflow-wrap:anywhere; white-space:normal; line-height:1.15; }
 /* Verwijderd op verzoek: Weekly Overview + Last 10 Match Days (Match Day Comparison) */
 .overview-card, .matchday-card{ display:none !important; }
 
