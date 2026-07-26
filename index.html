@@ -7927,11 +7927,13 @@ function ppSeasonCalendar(player) {
       const a = 0.16 + 0.84 * Math.min(v / maxTd, 1);
       fill = 'rgba(120, 160, 220,' + a.toFixed(3) + ')';
       if (s.isMatch) {
-        stroke = ' stroke="#FFCC33" stroke-width="2.4"';
         var _mrow = null;
         try { var _rr = state.rowsByPlayerDate.get(player).get(s.date); if (_rr) _mrow = _rr.find(function(rr){ return isMatchDayRow(rr) && isEntireSessionDrill(rr.drill); }); } catch(e){}
+        var _title = (_mrow && _mrow.sessionTitle) ? _mrow.sessionTitle : '';
+        var _col = (_mrow && _mrow.team === 'Nat Team') ? '#FFFFFF' : (/·\s*EU/.test(_title) ? '#FF8C1A' : '#FFCC33');
+        stroke = ' stroke="' + _col + '" stroke-width="2.4"';
         var _mn = _mrow ? (fmtNum(_mrow.time, 0) + ' min played') : '';
-        tip = (_mrow && _mrow.sessionTitle ? _mrow.sessionTitle : 'Match day') + (_mn ? ' · ' + _mn : '') + ' · ' + fmtDLong(t);
+        tip = (_title || 'Match day') + (_mn ? ' · ' + _mn : '') + ' · ' + fmtDLong(t);
       } else {
         tip = fmtDLong(t) + (s.sessionType ? ' · ' + s.sessionType : '') + ' · TD ' + fmtNum(v, 0) + ' m';
       }
@@ -7945,7 +7947,7 @@ function ppSeasonCalendar(player) {
   return '<div class="pp-cal-wrap"><svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H
     + '" xmlns="http://www.w3.org/2000/svg" role="img">' + svg + '</svg></div>'
     + '<div class="pp-cal-note">Each square = one day · darker = higher Total Distance (player max '
-    + fmtNum(maxTd, 0) + ' m) · <span style="display:inline-block;width:9px;height:9px;border:2px solid #FFCC33;border-radius:2px;vertical-align:-1px"></span> = match day'
+    + fmtNum(maxTd, 0) + ' m) · match day: <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1pxborder:2px solid #FFCC33"></span> league <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1pxborder:2px solid #FF8C1A"></span> European <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1pxborder:2px solid #FFFFFF"></span> national team'
     + ' · grey = no session' + (capped ? ' · showing the most recent ' + PP_CAL_MAX_WEEKS + ' weeks' : '')
     + ' · hover a square for the details</div>';
 }
@@ -9465,7 +9467,8 @@ html, body{ background:#071A3A !important; }
 .ppl-metrics{ display:flex; gap:6px; margin:0 0 8px; flex-wrap:wrap; }
 .ppl-pill{ background:#0A2E5C; color:#fff; border:1px solid #4C8FD6; border-radius:14px; padding:3px 12px; font-size:11px; font-family:inherit; cursor:pointer; }
 .ppl-pill.on{ background:#5EAAFF; color:#0A1F44; border-color:#5EAAFF; font-weight:700; }
-.ppx-txt b{ font-size:14px; overflow-wrap:anywhere; white-space:normal; line-height:1.15; }
+.ppx-txt{ grid-column: span 2; }
+.ppx-txt b{ font-size:16px; overflow-wrap:anywhere; white-space:normal; line-height:1.15; }
 /* Verwijderd op verzoek: Weekly Overview + Last 10 Match Days (Match Day Comparison) */
 .overview-card, .matchday-card{ display:none !important; }
 
