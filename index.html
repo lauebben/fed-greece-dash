@@ -8344,7 +8344,7 @@ function closePlayerProfile() {
     let name = null;
     const td = e.target.closest('.dr-table tbody td:first-child');
     if (td) {
-      name = td.textContent.trim();
+      name = (td.firstChild && td.firstChild.nodeType === 3) ? td.firstChild.textContent.trim() : td.textContent.trim();
     } else {
       const tile = e.target.closest('.ds-tile');
       if (tile) {
