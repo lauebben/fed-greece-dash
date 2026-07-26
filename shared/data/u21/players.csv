@@ -1,0 +1,26 @@
+player_number,last_name,gps_name,position,aliases,active,club,gps_system
+1,Botis,Botis,Goalkeeper,,true,Olympiacos,StatSports
+2,Monastirlis,Monastirlis,Goalkeeper,,true,PAOK,StatSports
+3,Angelidis,Angelidis,Goalkeeper,,true,Asteras Tripolis,
+4,Kalogeropoulos,Kalogeropoulos,Central Defender,,true,Olympiacos,StatSports
+5,Alexiou,Alexiou,Central Defender,,true,Inter Milan U23,
+6,Allen,Allen,Left Back,,true,Inter Miami,StatSports
+7,Keramitsis,Keramitsis,Central Defender,,true,Pogon Szczecin,
+8,Katris,Katris,Full Back,,true,Panathinaikos,StatSports
+9,Filon,Filon,Full Back,,true,Levadiakos,
+10,Koutsogoulas,Koutsogoulas,Defender,,true,Olympiacos B,StatSports
+11,Goumas,Goumas,Central Midfielder,,true,Levadiakos,
+12,Kaloskamis,Kaloskamis,Attacking Midfielder,,true,AEK Athens,StatSports
+13,Kontouris,Kontouris,Central Midfielder,,true,Panathinaikos,StatSports
+14,Papadopoulos,Papadopoulos,Midfielder,,true,Levadiakos,
+15,Bregu,Bregu,Midfielder,,true,Panetolikos,
+16,Nikolaou,Nikolaou,Midfielder,,true,Panetolikos,
+17,Apostolakis,Apostolakis,Midfielder,,true,OFI Crete,Iterpro Sports
+18,Bakoulas,Bakoulas,Central Midfielder,,true,Olympiacos,StatSports
+19,Tzimas,Tzimas,Striker,,true,Brighton,
+20,Koutsias,Koutsias,Striker,,true,Lugano,
+21,Pnevmonidis,Pnevmonidis,Winger,,true,Atromitos,
+22,Smyrlis,Smyrlis,Winger,,true,Panetolikos,
+23,Papakanellos,Papakanellos,Forward,,true,Rio Ave,
+24,Rallis,Rallis,Forward,,true,Jagiellonia,
+25,Theodosoulakis,Theodosoulakis,Forward,,true,OFI Crete,Iterpro Sports
