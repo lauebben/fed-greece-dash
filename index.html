@@ -2923,6 +2923,10 @@ html, body{ background:#071A3A !important; color:var(--text); }
       <div class="pp-table-title">Cross-module snapshot</div>
       <div id="ppCross"></div>
     </div>
+    <div class="pp-table-wrap" style="padding-top:0;padding-bottom:6px" id="ppLoadWrap">
+      <div class="pp-table-title">Load by source \u00B7 last 28 days</div>
+      <div id="ppLoad"></div>
+    </div>
     <div class="pp-table-wrap" style="padding-top:16px;padding-bottom:4px" id="ppPosWrap">
       <div class="pp-table-title" id="ppPosTitle">Vs position average</div>
       <div class="table-inner" id="ppPosComp"></div>
@@ -8145,12 +8149,20 @@ function ppCrossModule(player){
   var cmjV='\u2013', cmjS='';
   var cc=last2(D.cmj&&D.cmj[key]);
   if(cc[0]&&cc[0].jump_height!=null){ cmjV=fmtNum(cc[0].jump_height,1)+' cm'; if(cc[1]&&cc[1].jump_height!=null){ var d=cc[0].jump_height-cc[1].jump_height; cmjS=(d>=0?'+':'\u2212')+fmtNum(Math.abs(d),1)+' cm vs prev'; } }
+  var asymV='\u2013', asymFlag='';
+  if(cc[0]&&cc[0].asym!=null){ var _a=cc[0].asym; asymV=fmtNum(Math.abs(_a),1)+'% '+(_a>=0?'R':'L'); if(Math.abs(_a)>10) asymFlag=' ppx-flag'; }
   var wV='\u2013', wS='';
   var ww=last2(D.wellness&&D.wellness[key]);
   if(ww[0]){ var rd=ww[0].readiness!=null?ww[0].readiness:ww[0].readiness_est; if(rd!=null){ wV=fmtNum(rd,0); wS='sleep '+(ww[0].sleep!=null?fmtNum(ww[0].sleep,0):'\u2013')+' \u00B7 sore '+(ww[0].soreness!=null?fmtNum(ww[0].soreness,0):'\u2013'); } }
   var rV='\u2013', rS='';
   var rr=last2(D.rpe&&D.rpe[key]);
   if(rr[0]&&rr[0].srpe!=null){ rV=fmtNum(rr[0].srpe,0)+' AU'; rS='RPE '+(rr[0].rpe!=null?fmtNum(rr[0].rpe,0):'\u2013')+' \u00B7 '+(rr[0].duration!=null?fmtNum(rr[0].duration,0)+'m':'\u2013'); }
+  var wlV='\u2013', wlS='';
+  var _allr=(state.rows||[]).filter(function(r){return r.player===player && !isEntireSessionDrill(r.drill) && r.dateObj;});
+  var _dayTD={}; _allr.forEach(function(r){ _dayTD[r.date]=(_dayTD[r.date]||0)+(Number(r.td)||0); });
+  var _wobj=D.wellness&&D.wellness[key];
+  if(_wobj){ var _pairs=[]; Object.keys(_dayTD).forEach(function(dt){ var iso=(window.RCV_INTERNAL&&window.RCV_INTERNAL.isoDate)?window.RCV_INTERNAL.isoDate(dt):dt; var w=_wobj[iso]; if(!w) return; var rd=w.readiness!=null?w.readiness:w.readiness_est; if(rd==null) return; _pairs.push([_dayTD[dt],rd]); });
+    if(_pairs.length>=6){ var _srt=_pairs.slice().sort(function(a,b){return b[0]-a[0];}); var _t=Math.max(1,Math.round(_pairs.length/3)); var _hi=_srt.slice(0,_t), _lo=_srt.slice(-_t); var _mh=_hi.reduce(function(a,b){return a+b[1];},0)/_hi.length; var _ml=_lo.reduce(function(a,b){return a+b[1];},0)/_lo.length; wlV=fmtNum(_mh,0); wlS='hi-load \u00B7 vs '+fmtNum(_ml,0)+' low'; } }
   var lastMs = lastM? (fmtNum(lastM.time,0)+' min') : '\u2013';
   var lastMsub = lastM? ((lastM.team||'')+' \u00B7 '+formatDateShort(lastM.date)) : '';
   function card(v,l,sub){ return '<div class="ppx-cell"><b>'+v+'</b><small>'+l+'</small>'+(sub?'<em>'+sub+'</em>':'')+'</div>'; }
@@ -8161,7 +8173,32 @@ function ppCrossModule(player){
     + card(cmjV, 'CMJ jump height', cmjS)
     + card(wV, 'Readiness', wS)
     + card(rV, 's:RPE (latest)', rS)
+    + '<div class="ppx-cell'+asymFlag+'"><b>'+asymV+'</b><small>CMJ asymmetry L/R</small>'+(asymFlag?'<em>&gt;10% \u2014 check</em>':'')+'</div>'
+    + card(wlV, 'Readiness \u00d7 load', wlS)
     + '</div>';
+}
+
+function ppLoadSource(player){
+  var rows=(state.rows||[]).filter(function(r){return r.player===player && !isEntireSessionDrill(r.drill) && r.dateObj;});
+  if(!rows.length) return '<div class="empty-state" style="padding:10px">No load data.</div>';
+  var maxT=Math.max.apply(null, rows.map(function(r){return r.dateObj.getTime();}));
+  var cutoff=maxT-27*86400000;
+  var agg={club:{td:0,min:0,days:{}}, nat:{td:0,min:0,days:{}}};
+  rows.forEach(function(r){
+    if(r.dateObj.getTime()<cutoff) return;
+    var cat=((r.team||'')==='Nat Team')?'nat':'club';
+    agg[cat].td+=Number(r.td)||0; agg[cat].min+=Number(r.time)||0; agg[cat].days[r.date]=1;
+  });
+  var ct=agg.club.td, nt=agg.nat.td, tot=(ct+nt)||1;
+  function bar(label,val,color,days,mins){
+    var pct=Math.round(val/tot*100);
+    return '<div class="ppl-row"><span class="ppl-lab">'+label+'</span>'
+      +'<span class="ppl-track"><span class="ppl-fill" style="width:'+pct+'%;background:'+color+'"></span></span>'
+      +'<span class="ppl-val">'+fmtNum(val/1000,1)+' km</span></div>'
+      +'<div class="ppl-sub">'+Object.keys(days).length+' days \u00B7 '+fmtNum(mins,0)+' min \u00B7 '+pct+'%</div>';
+  }
+  return bar('Club', ct, '#0E6BA8', agg.club.days, agg.club.min)
+       + bar('Nat Team', nt, '#5EAAFF', agg.nat.days, agg.nat.min);
 }
 
 function openPlayerProfile(player, comparePlayer) {
@@ -8203,6 +8240,8 @@ function openPlayerProfile(player, comparePlayer) {
 
   try { document.getElementById('ppCross').innerHTML = ppCrossModule(player); }
   catch (e) { console.error('Profile: cross-module failed', e); var _xx=document.getElementById('ppCross'); if(_xx) _xx.innerHTML='<div class="empty-state" style="padding:12px">Cross-module unavailable.</div>'; }
+  try { document.getElementById('ppLoad').innerHTML = ppLoadSource(player); }
+  catch (e) { var _xl=document.getElementById('ppLoad'); if(_xl) _xl.innerHTML=''; }
 
   try {
     const pc = ppPositionCompare(player);
@@ -9409,6 +9448,15 @@ html, body{ background:#071A3A !important; }
 .ppx-cell b{ display:block; font-size:18px; color:#EAF2FF; font-weight:800; line-height:1.1; }
 .ppx-cell small{ display:block; font-size:10px; color:#9DB9E6; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
 .ppx-cell em{ display:block; font-size:11px; color:#5EAAFF; font-style:normal; margin-top:3px; }
+.ppx-flag{ border-color:#d64545 !important; background:#3a1720 !important; }
+.ppx-flag b{ color:#ffb3b3 !important; }
+.ppx-flag em{ color:#ff9a9a !important; }
+.ppl-row{ display:flex; align-items:center; gap:10px; margin-top:8px; }
+.ppl-lab{ width:74px; font-size:12px; color:#EAF2FF; font-weight:700; }
+.ppl-track{ flex:1; height:12px; background:#0C2C5A; border:1px solid #1E4E8C; border-radius:7px; overflow:hidden; }
+.ppl-fill{ display:block; height:100%; border-radius:7px; }
+.ppl-val{ width:66px; text-align:right; font-size:12px; color:#EAF2FF; font-weight:700; }
+.ppl-sub{ font-size:10px; color:#9DB9E6; margin:2px 0 0 84px; }
 /* Verwijderd op verzoek: Weekly Overview + Last 10 Match Days (Match Day Comparison) */
 .overview-card, .matchday-card{ display:none !important; }
 
@@ -10858,6 +10906,7 @@ table.sq-tbl thead th{
         if (!key || !date) return;
         push(D.cmj, key, date, {
           jump_height:   num(get(r, ['jump_height', 'jump_height_cm'])),
+          asym:          num(get(r, ['asym_pct', 'asymmetry'])),
           mrsi:          num(get(r, ['mrsi'])),
           take_off_ms:   num(get(r, ['take_off_ms'])),
           propulsion_ms: num(get(r, ['propulsion_ms'])),
