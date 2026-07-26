@@ -1,0 +1,24 @@
+player_number,last_name,gps_name,position,aliases,active,club,gps_system
+1,Kakadiaris,Kakadiaris,Goalkeeper,,true,Asteras Tripolis,
+2,Kaltsas,Kaltsas,Goalkeeper,,true,STK Samorin,
+3,Tsiotas,Tsiotas,Full Back,,true,PAOK U19,StatSports
+4,Dunga,Dunga,Central Defender,,true,PAOK B,StatSports
+5,Bataoulas,Bataoulas,Central Defender,,true,PAOK,StatSports
+6,Kosidis,Kosidis,Central Defender,,true,PAOK B,StatSports
+7,Ogiempante,Ogiempante,Full Back,,true,West Ham U21,
+8,Psyropoulos,Psyropoulos,Central Defender,,true,AEK U19,StatSports
+9,Kaloskamis,Kaloskamis,Full Back,,true,Panathinaikos U19,StatSports
+10,Sarris,Sarris,Central Midfielder,,true,PAOK B,StatSports
+11,Eleftheriadis,Eleftheriadis,Central Midfielder,,true,PAOK U19,StatSports
+12,Kolokotronis,Kolokotronis,Attacking Midfielder,,true,Olympiacos B,StatSports
+13,Sokos,Sokos,Midfielder,,true,Panathinaikos U19,StatSports
+14,Papanikopoulos,Papanikopoulos,Central Midfielder,,true,PAOK U19,StatSports
+15,Charoupas,Charoupas,Attacking Midfielder,,true,Aris,
+16,Zeka,Zeka,Midfielder,,true,Panathinaikos U19,StatSports
+17,Mythou,Mythou,Striker,,true,PAOK,StatSports
+18,Tsigkas,Tsigkas,Striker,,true,VfB Stuttgart U19,
+19,Bokos,Bokos,Winger,,true,Panathinaikos,StatSports
+20,Chaminta,Chaminta,Winger,,true,Lillestrom,
+21,Karargyris,Karargyris,Forward,,true,AEK U19,StatSports
+22,Berdos,Berdos,Forward,,true,PAOK B,StatSports
+23,Terzis,Terzis,Forward,,true,Panathinaikos U19,StatSports
