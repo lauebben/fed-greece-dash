@@ -2919,6 +2919,10 @@ html, body{ background:#071A3A !important; color:var(--text); }
       <button type="button" class="pp-compare-clear" id="ppCompareClear" hidden>Clear</button>
     </div>
     <div class="pp-status" id="ppStatus"></div>
+    <div class="pp-table-wrap" style="padding-top:14px;padding-bottom:4px" id="ppCrossWrap">
+      <div class="pp-table-title">Cross-module snapshot</div>
+      <div id="ppCross"></div>
+    </div>
     <div class="pp-table-wrap" style="padding-top:16px;padding-bottom:4px" id="ppPosWrap">
       <div class="pp-table-title" id="ppPosTitle">Vs position average</div>
       <div class="table-inner" id="ppPosComp"></div>
@@ -8124,6 +8128,42 @@ function ppPopulateCompareSelect(player, comparePlayer) {
   }
 }
 
+function ppCrossModule(player){
+  function nrm(x){ return String(x==null?'':x).toLowerCase().replace(/^\s*\d+\s*/,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+  var key=nrm(player), D=(window.RCV_INTERNAL&&window.RCV_INTERNAL.data)||{};
+  var rows=(state.rows||[]).filter(function(r){return r.player===player;});
+  var natMin=0, clubMin=0, lastM=null;
+  rows.forEach(function(r){
+    if(r.sessionType && String(r.sessionType).toLowerCase()==='match day' && isEntireSessionDrill(r.drill)){
+      var t=Number(r.time)||0;
+      if((r.team||'')==='Nat Team') natMin+=t; else clubMin+=t;
+      if(!lastM || (r.dateObj && lastM && lastM.dateObj && r.dateObj>lastM.dateObj) || !lastM) lastM = (!lastM || (r.dateObj && (!lastM.dateObj || r.dateObj>lastM.dateObj))) ? r : lastM;
+    }
+  });
+  var clubName=(typeof CLUB_BY_PLAYER!=='undefined' && CLUB_BY_PLAYER[key])||'';
+  function last2(obj){ if(!obj) return [null,null]; var ks=Object.keys(obj).sort(); if(!ks.length) return [null,null]; return [obj[ks[ks.length-1]], ks.length>1?obj[ks[ks.length-2]]:null]; }
+  var cmjV='\u2013', cmjS='';
+  var cc=last2(D.cmj&&D.cmj[key]);
+  if(cc[0]&&cc[0].jump_height!=null){ cmjV=fmtNum(cc[0].jump_height,1)+' cm'; if(cc[1]&&cc[1].jump_height!=null){ var d=cc[0].jump_height-cc[1].jump_height; cmjS=(d>=0?'+':'\u2212')+fmtNum(Math.abs(d),1)+' cm vs prev'; } }
+  var wV='\u2013', wS='';
+  var ww=last2(D.wellness&&D.wellness[key]);
+  if(ww[0]){ var rd=ww[0].readiness!=null?ww[0].readiness:ww[0].readiness_est; if(rd!=null){ wV=fmtNum(rd,0); wS='sleep '+(ww[0].sleep!=null?fmtNum(ww[0].sleep,0):'\u2013')+' \u00B7 sore '+(ww[0].soreness!=null?fmtNum(ww[0].soreness,0):'\u2013'); } }
+  var rV='\u2013', rS='';
+  var rr=last2(D.rpe&&D.rpe[key]);
+  if(rr[0]&&rr[0].srpe!=null){ rV=fmtNum(rr[0].srpe,0)+' AU'; rS='RPE '+(rr[0].rpe!=null?fmtNum(rr[0].rpe,0):'\u2013')+' \u00B7 '+(rr[0].duration!=null?fmtNum(rr[0].duration,0)+'m':'\u2013'); }
+  var lastMs = lastM? (fmtNum(lastM.time,0)+' min') : '\u2013';
+  var lastMsub = lastM? ((lastM.team||'')+' \u00B7 '+formatDateShort(lastM.date)) : '';
+  function card(v,l,sub){ return '<div class="ppx-cell"><b>'+v+'</b><small>'+l+'</small>'+(sub?'<em>'+sub+'</em>':'')+'</div>'; }
+  return '<div class="ppx-grid">'
+    + card(fmtNum(natMin+clubMin,0), 'Match min (season)', 'nat '+fmtNum(natMin,0)+' \u00B7 club '+fmtNum(clubMin,0))
+    + card(lastMs, 'Last match', lastMsub)
+    + card(clubName||'\u2013', 'Club', clubMin?('season '+fmtNum(clubMin,0)+' min'):'')
+    + card(cmjV, 'CMJ jump height', cmjS)
+    + card(wV, 'Readiness', wS)
+    + card(rV, 's:RPE (latest)', rS)
+    + '</div>';
+}
+
 function openPlayerProfile(player, comparePlayer) {
   const ov = document.getElementById('playerProfile');
   if (!ov) return;
@@ -8160,6 +8200,9 @@ function openPlayerProfile(player, comparePlayer) {
   } else {
     document.getElementById('ppStatus').innerHTML = ppStatusChips(player);
   }
+
+  try { document.getElementById('ppCross').innerHTML = ppCrossModule(player); }
+  catch (e) { console.error('Profile: cross-module failed', e); var _xx=document.getElementById('ppCross'); if(_xx) _xx.innerHTML='<div class="empty-state" style="padding:12px">Cross-module unavailable.</div>'; }
 
   try {
     const pc = ppPositionCompare(player);
@@ -9361,6 +9404,11 @@ html, body{ background:#071A3A !important; }
 .acwr-card .dr-table tbody td.acwr-pos{ color:#EAF2FF !important; font-weight:700 !important; }
 .pl-club{ display:block; font-size:10px; font-weight:400; color:#9DB9E6; margin-top:2px; letter-spacing:.01em; }
 .pl-sys{ color:#5EAAFF; }
+.ppx-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:10px; padding:4px 0 2px; }
+.ppx-cell{ background:#0C2C5A; border:1px solid #1E4E8C; border-radius:10px; padding:10px 12px; }
+.ppx-cell b{ display:block; font-size:18px; color:#EAF2FF; font-weight:800; line-height:1.1; }
+.ppx-cell small{ display:block; font-size:10px; color:#9DB9E6; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+.ppx-cell em{ display:block; font-size:11px; color:#5EAAFF; font-style:normal; margin-top:3px; }
 /* Verwijderd op verzoek: Weekly Overview + Last 10 Match Days (Match Day Comparison) */
 .overview-card, .matchday-card{ display:none !important; }
 
@@ -10809,7 +10857,7 @@ table.sq-tbl thead th{
         var key = resolve(get(r, ['last_name', 'player']), get(r, ['player_number']));
         if (!key || !date) return;
         push(D.cmj, key, date, {
-          jump_height:   num(get(r, ['jump_height'])),
+          jump_height:   num(get(r, ['jump_height', 'jump_height_cm'])),
           mrsi:          num(get(r, ['mrsi'])),
           take_off_ms:   num(get(r, ['take_off_ms'])),
           propulsion_ms: num(get(r, ['propulsion_ms'])),
