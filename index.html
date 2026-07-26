@@ -2567,6 +2567,18 @@ html, body{ background:#071A3A !important; color:var(--text); }
       </div>
     </div>
 
+    <div class="table-card" id="campArrivalCard">
+      <div class="table-header">
+        <div>
+          <div class="table-title">Camp arrival \u2014 load differentiation</div>
+          <div class="table-subtitle">Per-player load status on arrival from the club \u00b7 standard thresholds \u00b7 advisory \u2014 staff decides \u00b7 click a name for the full profile</div>
+        </div>
+        <div class="table-meta" id="campMeta">\u2014</div>
+      </div>
+      <div class="table-wrap"><div class="table-inner" id="campWrapper"><div class="empty-state">Loading\u2026</div></div></div>
+      <div class="acwr-explain" id="campLegend"></div>
+    </div>
+
     <div class="table-card">
       <div class="table-header">
         <div>
@@ -4427,6 +4439,10 @@ function render() {
   // Keep the ACWR card in sync with the Drill Date filter.
   try { renderAcwr(); }
   catch (e) { console.error('ACWR render failed:', e); }
+
+  // Camp arrival — load differentiation board.
+  try { renderCampArrival(); }
+  catch (e) { console.error('Camp arrival render failed:', e); }
 }
 
 function headerCell(sortKey, label, isGroupStart) {
@@ -7281,6 +7297,58 @@ function pxHexToRgba(hex, a) {
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 
+var CAMP_CAT={rtp:{label:'RTP \u2192 progressive',color:'#EF9F27',ord:0},over:{label:'Overloaded \u2192 taper',color:'#E24B4A',ord:1},fatigue:{label:'Fatigue \u2192 monitor',color:'#D85A30',ord:2},under:{label:'Underloaded \u2192 top-up',color:'#378ADD',ord:3},ok:{label:'Optimal \u2192 maintain',color:'#639922',ord:4},na:{label:'Insufficient data',color:'#9DB9E6',ord:5}};
+var CAMP_ADVICE={over:{md3:'\u221230% vol',md2:'\u221215%',md1:'normal',note:'recovery-biased, monitor'},ok:{md3:'normal',md2:'normal',md1:'normal',note:'follow squad plan'},under:{md3:'+20% vol',md2:'+10%',md1:'normal',note:'compensatory HSR / conditioning'},rtp:{md3:'\u221240% (individual)',md2:'\u221225%',md1:'\u221215%',note:'medical sign-off, no HSR spikes'},fatigue:{md3:'\u221215% + recheck',md2:'normal if recovered',md1:'normal',note:'monitor CMJ / wellness daily'},na:{md3:'\u2014',md2:'\u2014',md1:'\u2014',note:'insufficient data \u2014 manual review'}};
+function campArrivalPlayer(p,a){
+  function nrm(x){return String(x==null?'':x).toLowerCase().replace(/^\s*\d+\s*/,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
+  var key=nrm(p),D=(window.RCV_INTERNAL&&window.RCV_INTERNAL.data)||{};
+  var endObj=parseDate(state.selectedDate),endT=endObj?endObj.getTime():Date.now();
+  var mine=(state.rows||[]).filter(function(r){return r.player===p&&r.dateObj;});
+  var lastMatch=null;
+  mine.forEach(function(r){if(String(r.sessionType||'').toLowerCase()==='match day'&&isEntireSessionDrill(r.drill)&&r.dateObj.getTime()<=endT){if(!lastMatch||r.dateObj>lastMatch.dateObj)lastMatch=r;}});
+  var lastMin=lastMatch?Math.round(Number(lastMatch.time)||0):null;
+  var daysSince=lastMatch?Math.round((endT-lastMatch.dateObj.getTime())/86400000):null;
+  var w=D.wellness&&D.wellness[key],wl=null;
+  if(w){var wk=Object.keys(w).sort();if(wk.length)wl=w[wk[wk.length-1]];}
+  var readiness=wl?(wl.readiness!=null?wl.readiness:wl.readiness_est):null,soreness=wl?wl.soreness:null;
+  var cmjTrend=null,c=D.cmj&&D.cmj[key];
+  if(c){var ck=Object.keys(c).sort();if(ck.length>=2){var j1=c[ck[ck.length-1]].jump_height,j0=c[ck[ck.length-2]].jump_height;if(j1!=null&&j0>0)cmjTrend=(j1-j0)/j0*100;}}
+  var days=[];mine.forEach(function(r){if(!isEntireSessionDrill(r.drill)){var dd=(endT-r.dateObj.getTime())/86400000;if(dd>=0&&dd<=35)days.push(r.dateObj.getTime());}});
+  days=Array.from(new Set(days)).sort(function(x,y){return x-y;});
+  var rtpGap=false;
+  for(var i=1;i<days.length;i++){var gap=(days[i]-days[i-1])/86400000,eg=(endT-days[i])/86400000;if(gap>=7&&eg<=14){rtpGap=true;break;}}
+  var acwr=a?a.ratio:null,trainDays=a?a.trainDays:0;
+  var under=(typeof ACWR_THRESHOLDS!=='undefined'&&ACWR_THRESHOLDS.under)||0.8,sweetMax=(typeof ACWR_THRESHOLDS!=='undefined'&&ACWR_THRESHOLDS.sweetMax)||1.3;
+  var cat;
+  if(trainDays<6||acwr==null)cat='na';
+  else if(rtpGap)cat='rtp';
+  else if(acwr>sweetMax||(lastMin!=null&&lastMin>=60&&daysSince!=null&&daysSince<=2))cat='over';
+  else if((readiness!=null&&readiness<55)||(cmjTrend!=null&&cmjTrend<-5)||(soreness!=null&&soreness>=3))cat='fatigue';
+  else if(acwr<under)cat='under';
+  else cat='ok';
+  return {player:p,position:(a&&a.position)||'',acwr:acwr,trainDays:trainDays,lastMin:lastMin,daysSince:daysSince,readiness:readiness,cmjTrend:cmjTrend,cat:cat};
+}
+function campArrivalBuild(){var acwr=acwrBuildRows('td'),out=[];acwr.forEach(function(a){out.push(campArrivalPlayer(a.player,a));});out.sort(function(x,y){return CAMP_CAT[x.cat].ord-CAMP_CAT[y.cat].ord||(x.player<y.player?-1:1);});return out;}
+function renderCampArrival(){
+  var wrap=document.getElementById('campWrapper');if(!wrap)return;
+  var rows=campArrivalBuild(),meta=document.getElementById('campMeta');
+  if(meta)meta.textContent='Ending '+formatDateShort(state.selectedDate)+' \u00b7 '+rows.length+' players';
+  if(!rows.length){wrap.innerHTML='<div class="empty-state">No players with recent load.</div>';return;}
+  var h='<table class="dr-table"><thead><tr><th>Player</th><th>Status</th><th>ACWR</th><th>Last match</th><th>Rdy</th><th>CMJ</th><th>MD-3</th><th>MD-2</th><th>MD-1</th></tr></thead><tbody>';
+  rows.forEach(function(r){var cc=CAMP_CAT[r.cat],adv=CAMP_ADVICE[r.cat];
+    h+='<tr><td class="pl-name">'+monoEsc(r.player)+'</td>'
+      +'<td><span class="camp-badge" style="background:'+cc.color+'">'+monoEsc(cc.label)+'</span><div class="camp-note">'+monoEsc(adv.note)+'</div></td>'
+      +'<td>'+(r.acwr!=null?fmtNum(r.acwr,2):'\u2013')+'</td>'
+      +'<td>'+(r.lastMin!=null?(r.lastMin+"' "+(r.daysSince!=null?r.daysSince+'d':'')):'\u2013')+'</td>'
+      +'<td>'+(r.readiness!=null?fmtNum(r.readiness,0):'\u2013')+'</td>'
+      +'<td>'+(r.cmjTrend!=null?((r.cmjTrend>=0?'+':'')+fmtNum(r.cmjTrend,0)+'%'):'\u2013')+'</td>'
+      +'<td class="camp-adv">'+monoEsc(adv.md3)+'</td><td class="camp-adv">'+monoEsc(adv.md2)+'</td><td class="camp-adv">'+monoEsc(adv.md1)+'</td></tr>';
+  });
+  h+='</tbody></table>';wrap.innerHTML=h;
+  var leg=document.getElementById('campLegend');
+  if(leg)leg.innerHTML='<div class="acwr-legend">'+Object.keys(CAMP_CAT).map(function(k){var c=CAMP_CAT[k];return '<span class="mono-legend-pill"><span class="mono-dot" style="background:'+c.color+'"></span>'+monoEsc(c.label)+'</span>';}).join('')+'</div><div style="margin-top:8px">MD-3/-2/-1 = suggested adjustment vs the standard squad session for that day. Advisory only \u2014 staff sets thresholds and can override; RTP flags need medical sign-off.</div>';
+}
+
 function renderAcwr() {
   if (!acwrState.initialized) return;
   const wrap = document.getElementById('acwrWrapper');
@@ -9450,6 +9518,9 @@ html, body{ background:#071A3A !important; }
 .acwr-card .dr-table tbody td.acwr-pos{ color:#EAF2FF !important; font-weight:700 !important; }
 .pl-club{ display:block; font-size:10px; font-weight:400; color:#9DB9E6; margin-top:2px; letter-spacing:.01em; }
 .pl-sys{ color:#5EAAFF; }
+.camp-badge{ display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:700; color:#08213F; white-space:nowrap; }
+.camp-note{ font-size:10px; color:#9DB9E6; margin-top:3px; }
+.camp-adv{ font-size:12px; color:#EAF2FF; white-space:nowrap; font-weight:600; }
 .px-panel:has(#pxAdMax){ display:none !important; }
 .ppx-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:10px; padding:4px 0 2px; }
 .ppx-cell{ background:#0C2C5A; border:1px solid #1E4E8C; border-radius:10px; padding:10px 12px; }
