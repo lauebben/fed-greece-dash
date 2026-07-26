@@ -2366,11 +2366,24 @@ html, body{ background:#071A3A !important; color:var(--text); }
 </head>
 <body>
   <div class="app">
+    <script>window.__SQUAD__=(function(){try{var q=(new URLSearchParams(location.search).get('squad')||'a').toLowerCase();return (q==='u21'||q==='u19')?q:'a';}catch(e){return 'a';}})();window.__DATA_DIR__=window.__SQUAD__==='a'?'shared/data/':'shared/data/'+window.__SQUAD__+'/';</script>
+    <style>
+    .squad-switch{display:flex;gap:8px;margin:6px 0 2px}
+    .squad-pill{padding:5px 16px;border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;background:#0A2E5C;color:#fff;border:1px solid #4C8FD6;transition:all .12s}
+    .squad-pill:hover{background:#0F3B73}
+    .squad-pill.active{background:#5EAAFF;color:#0A1F44;border-color:#5EAAFF}
+    </style>
     <div class="header">
       <div class="header-left">
         <img src="shared/assets/logo.png" alt="Hellenic FF" class="header-logo" onerror="this.style.display='none'">
         <div class="titles">
-          <h1>Daily Report Dashboard</h1>
+          <h1 id="dashTitle">Daily Report Dashboard</h1>
+          <div class="squad-switch" id="squadSwitch" role="tablist" aria-label="Select squad">
+            <button type="button" class="squad-pill" data-sq="a" onclick="location.search='?squad=a'">Senior A</button>
+            <button type="button" class="squad-pill" data-sq="u21" onclick="location.search='?squad=u21'">U21</button>
+            <button type="button" class="squad-pill" data-sq="u19" onclick="location.search='?squad=u19'">U19</button>
+          </div>
+          <script>(function(){var q=window.__SQUAD__||'a';var els=document.querySelectorAll('#squadSwitch .squad-pill');for(var i=0;i<els.length;i++){if(els[i].getAttribute('data-sq')===q)els[i].classList.add('active');}var lbl={a:'Senior A',u21:'U21',u19:'U19'}[q];var h=document.getElementById('dashTitle');if(h&&q!=='a')h.textContent='Daily Report Dashboard \u00b7 '+lbl;if(q!=='a'){var ub=document.querySelector('.upload-bar');if(ub)ub.style.display='none';var us=document.querySelector('.upload-status');if(us)us.style.display='none';}})();</script>
           <div class="meta-row">
             <span>Date: <strong id="metaDate">—</strong></span>
             <span>Drills: <strong id="metaDrills">—</strong></span>
@@ -2968,7 +2981,9 @@ html, body{ background:#071A3A !important; color:var(--text); }
    Daily Report Dashboard — Hellenic FF
    ============================================================ */
 
-const DEFAULT_CSV_PATH = 'shared/data/Daily_Report.csv';
+const DATA_DIR = (typeof window !== 'undefined' && window.__DATA_DIR__) ? window.__DATA_DIR__ : 'shared/data/';
+const SQUAD = (typeof window !== 'undefined' && window.__SQUAD__) ? window.__SQUAD__ : 'a';
+const DEFAULT_CSV_PATH = DATA_DIR + 'Daily_Report.csv';
 
 /* ============================================================
    Adjustable alert thresholds (Settings ⚙)
@@ -3258,7 +3273,7 @@ function loadCSV() {
 
   // Laad eerst de club-lookup (players.csv) zodat de ACWR-tabel elke speler van
   // een club kan voorzien; ga daarna hoe dan ook door met de hoofd-parse.
-  Papa.parse('shared/data/players.csv?v=' + cacheBuster, {
+  Papa.parse(DATA_DIR + 'players.csv?v=' + cacheBuster, {
     download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim(),
     complete: (pr) => { try { (pr.data || []).forEach(row => {
         var cl = row.club; if (!cl) return;
@@ -9057,7 +9072,7 @@ loadCSV();
 })();
 </script>
 
-<script src="shared/lib/pd-freshness.js" data-csv="shared/data/Daily_Report.csv" data-datecol="Drill Date" data-order="mdy" data-label="Data"></script>
+<script>(function(){var d=(typeof window!=='undefined'&&window.__DATA_DIR__)?window.__DATA_DIR__:'shared/data/';document.write('<scr'+'ipt src="shared/lib/pd-freshness.js" data-csv="'+d+'Daily_Report.csv" data-datecol="Drill Date" data-order="mdy" data-label="Data"><\/scr'+'ipt>');})();</script>
 <div id="pxModalBg" class="px-modal-bg" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pxModalTitle">
   <div class="px-modal">
     <div class="px-modal-h"><h3 id="pxModalTitle">—</h3><button class="px-modal-x" id="pxModalX" aria-label="Close">✕</button></div>
@@ -10841,7 +10856,7 @@ table.sq-tbl thead th{
    Google Forms-formaat; welke van de twee wordt automatisch herkend.
    ===================================================================== */
 (function(){
-  var DIR = 'shared/data/';
+  var DIR = (typeof window !== 'undefined' && window.__DATA_DIR__) ? window.__DATA_DIR__ : 'shared/data/';
   var D = { players:{}, alias:{}, unmatched:{}, wellness:{}, rpe:{}, hrv:{}, cmj:{}, hrvDemo:false, ready:false };
 
   function norm(s){
