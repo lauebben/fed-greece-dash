@@ -2944,6 +2944,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
         <div class="pp-name" id="ppName">—</div>
         <div class="pp-sub" id="ppSub">—</div>
       </div>
+      <button type="button" class="pp-health-btn" onclick="openHealthModal(ppCurrentPlayer)" title="Health trends">♥ Health</button>
       <button type="button" class="pp-close" id="ppClose" aria-label="Close profile">✕</button>
     </div>
     <div class="pp-compare-row">
@@ -2981,6 +2982,34 @@ html, body{ background:#071A3A !important; color:var(--text); }
       <div class="pp-table-title">Last 10 sessions</div>
       <div class="table-inner" id="ppSessions"></div>
     </div>
+  </div>
+</div>
+
+<style>
+.hp-panel{max-width:1200px}
+.hp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 2px 10px}
+.hp-chartcard{background:#0E2A55;border:1px solid #1E4E8C;border-radius:10px;padding:10px 10px 6px}
+.hp-ctitle{font-size:12px;font-weight:700;color:#EAF2FF;margin-bottom:4px}
+.hp-svg{width:100%;height:auto;display:block}
+.hp-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;font-size:10px;color:#9DB9E6}
+.hp-leg{display:inline-flex;align-items:center;gap:4px}
+.hp-dot{width:10px;height:3px;border-radius:2px;display:inline-block}
+.hp-btn{margin-left:6px;background:transparent;border:none;color:#E24B4A;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;vertical-align:middle}
+.hp-btn:hover{color:#ff7a7a}
+.pp-health-btn{background:#0A2E5C;border:1px solid #4C8FD6;color:#fff;border-radius:12px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-right:8px}
+.pp-health-btn:hover{background:#0F3B73;color:#ff9ab1}
+@media(max-width:860px){.hp-grid{grid-template-columns:1fr}}
+</style>
+<div class="pp-overlay" id="healthModal" hidden onclick="if(event.target===this)closeHealthModal()">
+  <div class="pp-panel hp-panel" role="dialog" aria-modal="true" aria-label="Health trends">
+    <div class="pp-head">
+      <div>
+        <div class="pp-name" id="hpName">—</div>
+        <div class="pp-sub" id="hpSub">—</div>
+      </div>
+      <button type="button" class="pp-close" onclick="closeHealthModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="hp-grid" id="hpBody"></div>
   </div>
 </div>
 
@@ -7446,7 +7475,7 @@ function renderAcwr() {
       ? '<td class="acwr-na">n/a</td>'
       : '<td class="acwr-cell ' + r.level.cls + '">' + r.ratio.toFixed(2) + '</td>';
     html += '<tr>'
-      + '<td class="pl-name">' + monoEsc(r.player) + acwrClubHtml(r.player) + '</td>'
+      + '<td class="pl-name">' + monoEsc(r.player) + acwrClubHtml(r.player) + healthBtn(r.player) + '</td>'
       + '<td class="acwr-pos" style="background:' + pxHexToRgba(pxPositionColor(r.position), 0.30)
           + ';box-shadow:inset 3px 0 0 ' + pxPositionColor(r.position) + '">' + monoEsc(r.position || '—') + '</td>'
       + '<td>' + r.trainDays + '</td>'
@@ -8342,6 +8371,93 @@ function ppLoadSource(player){
     return '<div class="ppl-row"><span class="ppl-lab">'+label+'</span><span class="ppl-track"><span class="ppl-fill" style="width:'+pct+'%;background:'+color+'"></span></span><span class="ppl-val">'+disp+(M.unit?' '+M.unit:'')+'</span></div><div class="ppl-sub">'+Object.keys(days).length+' days \u00B7 '+fmtNum(mins,0)+' min \u00B7 '+pct+'%</div>'; }
   return '<div class="ppl-metrics">'+pills+'</div>'+bar('Club',cv,'#0E6BA8',agg.club.days,agg.club.min)+bar('Nat Team',nv,'#5EAAFF',agg.nat.days,agg.nat.min);
 }
+
+/* ============================================================
+   Health trends pop-up — wellness / RPE / vitals per player.
+   Leest de RCV health-service (window.RCV_INTERNAL.data): D.wellness,
+   D.rpe, D.hrv (hrv/rhr/rr). Losse modal, los van het spelersprofiel.
+   ============================================================ */
+function hpNorm(x){ return String(x==null?'':x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,''); }
+function hpData(player){
+  var D=(window.RCV_INTERNAL&&window.RCV_INTERNAL.data)||{}, k=hpNorm(player);
+  return { w:(D.wellness&&D.wellness[k])||{}, r:(D.rpe&&D.rpe[k])||{}, v:(D.hrv&&D.hrv[k])||{} };
+}
+function hpFmtDate(iso){ var p=String(iso).split('-'); return (+p[2])+'/'+(+p[1]); }
+
+/* Multi-line SVG met optionele rechter-as (dual axis). */
+function hpLineSVG(dates, series){
+  var W=560,H=196, mL=40, mR=44, mT=14, mB=26;
+  var iw=W-mL-mR, ih=H-mT-mB, n=dates.length;
+  if(n===0) return '<div class="empty-state" style="padding:16px">Geen data.</div>';
+  var xs=function(i){ return mL + (n===1? iw/2 : i/(n-1)*iw); };
+  function scale(ax){
+    var vals=[]; series.forEach(function(s){ if((s.axis||0)===ax) s.vals.forEach(function(v){ if(Number.isFinite(v)) vals.push(v); }); });
+    if(!vals.length) return null;
+    var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+    if(mn===mx){ mn-=1; mx+=1; } else { var pad=(mx-mn)*0.12; mn-=pad; mx+=pad; }
+    return {mn:mn,mx:mx,y:function(v){ return mT + ih - (v-mn)/(mx-mn)*ih; }};
+  }
+  var sL=scale(0), sR=scale(1), g='';
+  if(sL){ for(var i=0;i<=4;i++){ var yy=mT+ih*i/4, val=sL.mx-(sL.mx-sL.mn)*i/4;
+    g+='<line x1="'+mL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-mR)+'" y2="'+yy.toFixed(1)+'" stroke="#12386e" stroke-width="1"/>';
+    g+='<text x="'+(mL-5)+'" y="'+(yy+3).toFixed(1)+'" fill="#7FA8DA" font-size="9" text-anchor="end">'+Math.round(val)+'</text>'; } }
+  if(sR){ for(var j=0;j<=4;j++){ var yr=mT+ih*j/4, vr=sR.mx-(sR.mx-sR.mn)*j/4;
+    g+='<text x="'+(W-mR+5)+'" y="'+(yr+3).toFixed(1)+'" fill="#9AC0E8" font-size="9" text-anchor="start">'+(Math.round(vr*10)/10)+'</text>'; } }
+  var step=Math.max(1,Math.ceil(n/6));
+  for(var d=0; d<n; d+=step){ g+='<text x="'+xs(d).toFixed(1)+'" y="'+(H-8)+'" fill="#7FA8DA" font-size="9" text-anchor="middle">'+hpFmtDate(dates[d])+'</text>'; }
+  series.forEach(function(s){
+    var sc=(s.axis||0)===1?sR:sL; if(!sc) return;
+    var pts=[]; s.vals.forEach(function(v,i){ if(Number.isFinite(v)) pts.push([xs(i),sc.y(v)]); });
+    if(!pts.length) return;
+    g+='<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+s.color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(p){ g+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.3" fill="'+s.color+'"/>'; });
+  });
+  var leg=series.map(function(s){ return '<span class="hp-leg"><span class="hp-dot" style="background:'+s.color+'"></span>'+monoEsc(s.name)+((s.axis||0)===1?' (rechter-as)':'')+'</span>'; }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="hp-svg" preserveAspectRatio="xMidYMid meet" role="img">'+g+'</svg><div class="hp-legend">'+leg+'</div>';
+}
+
+function hpCard(title,svg){ return '<div class="hp-chartcard"><div class="hp-ctitle">'+monoEsc(title)+'</div>'+svg+'</div>'; }
+
+function openHealthModal(player){
+  var ov=document.getElementById('healthModal'); if(!ov||!player) return;
+  var d=hpData(player);
+  var set={}; [d.w,d.r,d.v].forEach(function(m){ Object.keys(m).forEach(function(k){ set[k]=1; }); });
+  var dates=Object.keys(set).sort();
+  document.getElementById('hpName').textContent=player;
+  document.getElementById('hpSub').textContent = dates.length
+     ? (dates.length+' dagen · '+hpFmtDate(dates[0])+' – '+hpFmtDate(dates[dates.length-1]))
+     : 'Geen health-data voor deze speler';
+  var col=function(map,field){ return dates.map(function(dt){ var o=map[dt]; return o&&Number.isFinite(o[field])?o[field]:null; }); };
+  var readiness=dates.map(function(dt){ var o=d.w[dt]; if(!o) return null; var r=(o.readiness!=null)?o.readiness:o.readiness_est; return Number.isFinite(r)?r:null; });
+  var html='';
+  if(!dates.length){
+    html='<div class="empty-state" style="padding:24px">Nog geen wellness/RPE/vitals voor '+monoEsc(player)+'.</div>';
+  } else {
+    html+=hpCard('Wellness — readiness & subjectief', hpLineSVG(dates,[
+      {name:'Readiness',color:'#5EAAFF',axis:0,vals:readiness},
+      {name:'Sleep',color:'#63C79A',axis:1,vals:col(d.w,'sleep')},
+      {name:'Mood',color:'#E0B341',axis:1,vals:col(d.w,'mood')},
+      {name:'Energy',color:'#C77FD8',axis:1,vals:col(d.w,'energy')}
+    ]));
+    html+=hpCard('Belasting — s:RPE & RPE', hpLineSVG(dates,[
+      {name:'s:RPE (load)',color:'#EF9F27',axis:0,vals:col(d.r,'srpe')},
+      {name:'RPE',color:'#9AC0E8',axis:1,vals:col(d.r,'rpe')}
+    ]));
+    html+=hpCard('Vitals — HRV & rusthartslag', hpLineSVG(dates,[
+      {name:'HRV',color:'#5EAAFF',axis:0,vals:col(d.v,'hrv')},
+      {name:'RHR',color:'#E24B4A',axis:1,vals:col(d.v,'rhr')}
+    ]));
+    html+=hpCard('HRV × ademhalingsfrequentie', hpLineSVG(dates,[
+      {name:'HRV',color:'#5EAAFF',axis:0,vals:col(d.v,'hrv')},
+      {name:'Resp. rate',color:'#63C79A',axis:1,vals:col(d.v,'rr')}
+    ]));
+  }
+  document.getElementById('hpBody').innerHTML=html;
+  ov.hidden=false;
+}
+function closeHealthModal(){ var ov=document.getElementById('healthModal'); if(ov) ov.hidden=true; }
+/* ♥-knopje voor de ACWR-rij (opent de Health-pop-up voor die speler). */
+function healthBtn(player){ return '<button type="button" class="hp-btn" title="Health trends" data-hp="'+monoEsc(player)+'" onclick="event.stopPropagation();openHealthModal(this.getAttribute(\'data-hp\'))">&#9829;</button>'; }
 
 function openPlayerProfile(player, comparePlayer) {
   const ov = document.getElementById('playerProfile');
@@ -10964,7 +11080,7 @@ table.sq-tbl thead th{
       fetchCsv('players.csv'),
       fetchCsv('wellness.csv'),
       fetchCsv('rpe.csv'),
-      fetchCsv('hrv.csv').then(function(r){
+      fetchCsv('vitals.csv').then(function(r){
         var okReal = !!(r && r.length && r.some(function(x){ return get(x, ['hrv']) != null; }));
         if (okReal) return r;
         D.hrvDemo = true;
