@@ -2987,7 +2987,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
 
 <style>
 .hp-panel{max-width:1200px}
-.hp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:8px 2px 10px}
+.hp-grid{display:grid;grid-template-columns:1fr;gap:16px;padding:8px 2px 10px}
 .hp-chartcard{background:#0E2A55;border:1px solid #1E4E8C;border-radius:10px;padding:10px 10px 6px}
 .hp-ctitle{font-size:12px;font-weight:700;color:#EAF2FF;margin-bottom:4px}
 .hp-svg{width:100%;height:auto;display:block}
@@ -2998,7 +2998,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
 .hp-btn:hover{color:#ff7a7a}
 .pp-health-btn{background:#0A2E5C;border:1px solid #4C8FD6;color:#fff;border-radius:12px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-right:8px}
 .pp-health-btn:hover{background:#0F3B73;color:#ff9ab1}
-@media(max-width:860px){.hp-grid{grid-template-columns:1fr}}
+@media(max-width:860px){.hp-grid{grid-template-columns:1fr}} .hp-svg{max-height:340px}
 </style>
 <div class="pp-overlay" id="healthModal" hidden onclick="if(event.target===this)closeHealthModal()">
   <div class="pp-panel hp-panel" role="dialog" aria-modal="true" aria-label="Health trends">
@@ -8386,7 +8386,7 @@ function hpFmtDate(iso){ var p=String(iso).split('-'); return (+p[2])+'/'+(+p[1]
 
 /* Multi-line SVG met optionele rechter-as (dual axis). */
 function hpLineSVG(dates, series){
-  var W=560,H=196, mL=40, mR=44, mT=14, mB=26;
+  var W=720,H=232, mL=44, mR=48, mT=16, mB=28;
   var iw=W-mL-mR, ih=H-mT-mB, n=dates.length;
   if(n===0) return '<div class="empty-state" style="padding:16px">Geen data.</div>';
   var xs=function(i){ return mL + (n===1? iw/2 : i/(n-1)*iw); };
