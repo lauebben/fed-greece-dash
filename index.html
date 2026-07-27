@@ -2592,6 +2592,54 @@ html, body{ background:#071A3A !important; color:var(--text); }
       <div class="acwr-explain" id="campLegend"></div>
     </div>
 
+    <div class="table-card monotony-card">
+      <div class="table-header">
+        <div>
+          <div class="table-title">Training Monotony &amp; Strain</div>
+          <div class="table-subtitle">Foster method · per player for the selected week · default load = Eccentric Load (weighted high-intensity decelerations) · daily load = training drills + match 1st/2nd half (Entire Session &amp; 15-min blocks excluded)</div>
+        </div>
+        <div class="table-meta" id="monotonyMeta">—</div>
+      </div>
+
+      <div class="overview-controls">
+        <div class="filter-card">
+          <div class="label">Year</div>
+          <select id="monotonyYear"></select>
+        </div>
+        <div class="filter-card">
+          <div class="label">Week</div>
+          <select id="monotonyWeek"></select>
+        </div>
+        <div class="filter-card">
+          <div class="label">Position</div>
+          <select id="monotonyPosition"></select>
+        </div>
+        <div class="filter-card">
+          <div class="label">Load metric</div>
+          <div class="pill-row" id="monotonyMetricPills"></div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-inner" id="monotonyWrapper">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+      <div class="mono-explain">
+        <strong>Monotony</strong> = how similar the daily loads are across the week (mean daily load ÷ standard deviation, 7-day basis with rest days as 0). A high value means the player trained at almost the same load every day.
+        <strong>Strain</strong> = weekly load × monotony — the total stress that built up that week.
+        <br><strong>Why?</strong> Foster found that weeks with high monotony and strain tend to come right before illness, injury and overtraining — even when the total weekly load looks perfectly normal. Strain is coloured by how much it changed versus the same player's previous week (▲ rising = building stress, ▼ falling = deload).
+        <br><strong>Eccentric Load</strong> = weighted count of high-intensity decelerations (zone 4×1 + zone 5×2 + zone 6×3) — the braking/eccentric actions most linked to muscle damage. Default metric; switch with the Load-metric pills.
+        <div class="mono-legend">
+          <span class="mono-legend-pill"><span class="mono-dot" style="background:#2D9B3F"></span>Monotony &lt; 1.5 — good variation</span>
+          <span class="mono-legend-pill"><span class="mono-dot" style="background:#E07B1F"></span>1.5–<span id="legMonoHighA">2.0</span> — monitor</span>
+          <span class="mono-legend-pill"><span class="mono-dot" style="background:#d64545"></span>&gt; <span id="legMonoHighB">2.0</span> — high</span>
+        </div>
+      </div>
+    </div>
+
+
     <div class="table-card">
       <div class="table-header">
         <div>
@@ -2781,52 +2829,6 @@ html, body{ background:#071A3A !important; color:var(--text); }
          (>2.0 = high). Strain is in load units and is flagged by how
          much it changed vs that player's previous week.
          ============================================================ -->
-    <div class="table-card monotony-card">
-      <div class="table-header">
-        <div>
-          <div class="table-title">Training Monotony &amp; Strain</div>
-          <div class="table-subtitle">Foster method · per player for the selected week · daily load summed across drills (excl. Entire Session)</div>
-        </div>
-        <div class="table-meta" id="monotonyMeta">—</div>
-      </div>
-
-      <div class="overview-controls">
-        <div class="filter-card">
-          <div class="label">Year</div>
-          <select id="monotonyYear"></select>
-        </div>
-        <div class="filter-card">
-          <div class="label">Week</div>
-          <select id="monotonyWeek"></select>
-        </div>
-        <div class="filter-card">
-          <div class="label">Position</div>
-          <select id="monotonyPosition"></select>
-        </div>
-        <div class="filter-card">
-          <div class="label">Load metric</div>
-          <div class="pill-row" id="monotonyMetricPills"></div>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <div class="table-inner" id="monotonyWrapper">
-          <div class="empty-state">Loading…</div>
-        </div>
-      </div>
-
-      <div class="mono-explain">
-        <strong>Monotony</strong> = how similar the daily loads are across the week (mean daily load ÷ standard deviation, 7-day basis with rest days as 0). A high value means the player trained at almost the same load every day.
-        <strong>Strain</strong> = weekly load × monotony — the total stress that built up that week.
-        <br><strong>Why?</strong> Foster found that weeks with high monotony and strain tend to come right before illness, injury and overtraining — even when the total weekly load looks perfectly normal. Strain is coloured by how much it changed versus the same player's previous week (▲ rising = building stress, ▼ falling = deload).
-        <div class="mono-legend">
-          <span class="mono-legend-pill"><span class="mono-dot" style="background:#2D9B3F"></span>Monotony &lt; 1.5 — good variation</span>
-          <span class="mono-legend-pill"><span class="mono-dot" style="background:#E07B1F"></span>1.5–<span id="legMonoHighA">2.0</span> — monitor</span>
-          <span class="mono-legend-pill"><span class="mono-dot" style="background:#d64545"></span>&gt; <span id="legMonoHighB">2.0</span> — high</span>
-        </div>
-      </div>
-    </div>
-
     <!-- ============================================================
          Max Game Data — historical peaks vs last matchday per player.
          Game = sum of 1st Half + 1st Half ET + 2nd Half + 2nd Half ET on a Match Day.
@@ -3384,6 +3386,7 @@ function ingest(rawRows) {
       entZ4:  num(r[COL.entZ4]),  entZ5:  num(r[COL.entZ5]),  entZ6:  num(r[COL.entZ6]),
       accZ4:  num(r[COL.accZ4]),  accZ5:  num(r[COL.accZ5]),  accZ6:  num(r[COL.accZ6]),
       decZ4:  num(r[COL.decZ4]),  decZ5:  num(r[COL.decZ5]),  decZ6:  num(r[COL.decZ6]),
+      ecc:    (num(r[COL.decZ4])||0) + 2*(num(r[COL.decZ5])||0) + 3*(num(r[COL.decZ6])||0),
       accDistZ4: num(r[COL.accDistZ4]), accDistZ5: num(r[COL.accDistZ5]), accDistZ6: num(r[COL.accDistZ6]),
       decDistZ4: num(r[COL.decDistZ4]), decDistZ5: num(r[COL.decDistZ5]), decDistZ6: num(r[COL.decDistZ6]),
       sprintDistF: num(r[COL.sprintDistF]), sprints: num(r[COL.sprints]),
@@ -6832,6 +6835,7 @@ const PASSWORD_STORAGE_KEY = 'gtec_upload_password_v1';
    previous week (the closest earlier week with data in the same year).
    ============================================================ */
 const MONO_METRICS = [
+  { key: 'ecc', display: 'Ecc Load', unit: 'AU' },
   { key: 'td',  display: 'TD',  unit: 'm' },
   { key: 'hsr', display: 'HSR', unit: 'm' },
   { key: 'acc', display: 'Acc', unit: ''  },
@@ -6859,19 +6863,56 @@ function monoNum(v) {
   return Math.round(v).toLocaleString('en-US');
 }
 
-/* Σ metric per calendar day for one player in one year+week (rollups excluded). */
+/* 15-min game blocks ("0-15" .. "105-120") — excluded so match days are not
+   double-counted (we keep only 1st/2nd half on games; drills on trainings). */
+function isMonoBlockDrill(d) { return /^\s*\d{1,3}\s*-\s*\d{1,3}\s*$/.test(String(d == null ? '' : d)); }
+function monoSkip(drill) { return isEntireSessionDrill(drill) || isMonoBlockDrill(drill); }
+
+/* Σ metric per calendar day for one player in one year+week.
+   Trainings = losse drills; games = 1st + 2nd half (Entire Session &
+   15-min blocks excluded, per staff spec). */
 function monoDailyLoads(player, year, weekStr, metricKey) {
   const byDate = new Map();
   for (const r of state.rows) {
     if (r.player !== player) continue;
     if (r.week !== weekStr) continue;
     if (getYearFromDate(r.date) !== year) continue;
-    if (isEntireSessionDrill(r.drill)) continue;
+    if (monoSkip(r.drill)) continue;
     const v = r[metricKey];
     if (!Number.isFinite(v)) continue;
     byDate.set(r.date, (byDate.get(r.date) || 0) + v);
   }
   return [...byDate.values()];
+}
+
+/* Daily load mapped to weekday slot (Mon=0..Sun=6) for the 7-day sparkline. */
+function monoDailySeries(player, year, weekStr, metricKey) {
+  const wd = [0,0,0,0,0,0,0];
+  for (const r of state.rows) {
+    if (r.player !== player) continue;
+    if (r.week !== weekStr) continue;
+    if (getYearFromDate(r.date) !== year) continue;
+    if (monoSkip(r.drill)) continue;
+    const v = r[metricKey];
+    if (!Number.isFinite(v) || !r.dateObj) continue;
+    wd[(r.dateObj.getDay() + 6) % 7] += v;
+  }
+  return wd;
+}
+
+/* Compact inline bar sparkline of the 7 weekday loads. */
+function monoSpark(series) {
+  const max = Math.max.apply(null, series.concat([1]));
+  const W = 84, H = 22, n = series.length, bw = W / n - 2;
+  let bars = '';
+  for (let i = 0; i < n; i++) {
+    const h = max > 0 ? Math.max(1, series[i] / max * (H - 2)) : 1;
+    const x = i * (W / n) + 1, y = H - h;
+    const col = series[i] > 0 ? '#5EAAFF' : '#1E4E8C';
+    bars += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + Math.max(1,bw).toFixed(1)
+         + '" height="' + h.toFixed(1) + '" rx="1" fill="' + col + '"></rect>';
+  }
+  return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block" role="img" aria-label="7-day load">' + bars + '</svg>';
 }
 
 /* Foster monotony/strain from an array of training-day loads.
@@ -6910,7 +6951,7 @@ function monoPrevWeekStrain(player, year, weekStr, metricKey) {
   for (const r of state.rows) {
     if (r.player !== player) continue;
     if (getYearFromDate(r.date) !== year) continue;
-    if (isEntireSessionDrill(r.drill)) continue;
+    if (monoSkip(r.drill)) continue;
     if (parseInt(r.week, 10) !== prev) continue;
     const v = r[metricKey];
     if (!Number.isFinite(v)) continue;
@@ -6946,7 +6987,7 @@ function monotonyInit() {
   const weeks = [...idx.get(monotonyState.selectedYear)].sort((a, b) => parseInt(a) - parseInt(b));
   monotonyState.selectedWeek = weeks[weeks.length - 1];
   monotonyState.selectedPosition = 'All';
-  monotonyState.selectedMetric = 'td';
+  monotonyState.selectedMetric = 'ecc';
 
   populateMonotonyYearSelect();
   populateMonotonyWeekSelect();
@@ -7081,7 +7122,8 @@ function renderMonotony() {
     const f = fosterFromLoads(loads);
     if (!f) continue;
     const prevStrain = monoPrevWeekStrain(player, selectedYear, selectedWeek, selectedMetric);
-    out.push({ player, position, prevStrain, ...f });
+    const series = monoDailySeries(player, selectedYear, selectedWeek, selectedMetric);
+    out.push({ player, position, prevStrain, series, ...f });
     if (f.monotony === Infinity || (isFinite(f.monotony) && f.monotony > thresholds.monotonyHigh)) highCount++;
   }
 
@@ -7093,6 +7135,7 @@ function renderMonotony() {
   let html = '<table class="dr-table"><thead><tr>'
     + '<th>Player</th><th>Pos</th><th>Days</th>'
     + '<th>Weekly ' + monoEsc(metric.display) + '</th>'
+    + '<th>7-day</th>'
     + '<th>Daily Ø</th><th>Monotony</th><th>Strain</th><th>Strain vs prev</th>'
     + '</tr></thead><tbody>';
   for (const row of out) {
@@ -7103,6 +7146,7 @@ function renderMonotony() {
           + ';box-shadow:inset 3px 0 0 ' + pxPositionColor(row.position) + '">' + monoEsc(row.position || '—') + '</td>'
       + '<td>' + row.trainingDays + '</td>'
       + '<td>' + monoNum(row.weekly) + '</td>'
+      + '<td>' + monoSpark(row.series) + '</td>'
       + '<td>' + monoNum(row.mean) + '</td>'
       + monoCellHtml(row.monotony)
       + '<td>' + monoNum(row.strain) + '</td>'
