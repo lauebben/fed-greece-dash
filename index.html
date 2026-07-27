@@ -2583,13 +2583,20 @@ html, body{ background:#071A3A !important; color:var(--text); }
     <div class="table-card" id="campArrivalCard">
       <div class="table-header">
         <div>
-          <div class="table-title">Camp arrival \u2014 load differentiation</div>
-          <div class="table-subtitle">Per-player load status on arrival from the club \u00b7 standard thresholds \u00b7 advisory \u2014 staff decides \u00b7 click a name for the full profile</div>
+          <div class="table-title">Camp arrival — load differentiation</div>
+          <div class="table-subtitle">Per-player load status on arrival from the club · standard thresholds · advisory — staff decides · click a name for the full profile</div>
         </div>
-        <div class="table-meta" id="campMeta">\u2014</div>
+        <div class="table-meta" id="campMeta">—</div>
       </div>
-      <div class="table-wrap"><div class="table-inner" id="campWrapper"><div class="empty-state">Loading\u2026</div></div></div>
+      <div class="table-wrap"><div class="table-inner" id="campWrapper"><div class="empty-state">Loading…</div></div></div>
       <div class="acwr-explain" id="campLegend"></div>
+      <div class="acwr-explain">
+        <strong>What this shows.</strong> Players join camp from different clubs, each arriving in a different training state. This card reads every player's recent load history and turns it into one clear arrival status plus a concrete, day-by-day session adjustment — so the staff can individualise the first days of camp instead of running the same plan for everyone.
+        <br><strong>How the status is decided.</strong> Five signals are combined for each player: (1) <strong>ACWR</strong> — the acute:chronic workload ratio built from the combined club + national-team load; (2) <strong>last match</strong> — minutes played and days since; (3) <strong>readiness</strong> — the morning wellness check-in; (4) <strong>CMJ trend</strong> — change in jump height versus the previous test; and (5) a <strong>return-to-play gap detector</strong> that flags a recent break in loading.
+        <br><strong>The statuses.</strong> <em>Overloaded → taper</em> (arrived with a load spike or a full match just played) · <em>Fatigue → monitor</em> (low readiness, dropping CMJ or high soreness) · <em>Underloaded → top-up</em> (arrived undertrained — add compensatory load) · <em>Optimal → maintain</em> (in the sweet spot — follow the squad plan) · <em>RTP → progressive</em> (returning from a lay-off — build up gradually) · <em>Insufficient data</em> (too few loaded days to judge — manual review, never a guess).
+        <br><strong>Reading MD-3 / MD-2 / MD-1.</strong> Each column is the suggested adjustment versus the standard squad session on that day before the next match (e.g. −30% volume on MD-3). "normal" means follow the squad plan.
+        <br><strong>Advisory.</strong> These are decision-support suggestions, not instructions — the staff sets the thresholds and can override any row, and RTP flags always need medical sign-off. Click a player's name for the full cross-module profile behind the status.
+      </div>
     </div>
 
     <div class="table-card monotony-card">
@@ -2627,10 +2634,11 @@ html, body{ background:#071A3A !important; color:var(--text); }
       </div>
 
       <div class="mono-explain">
-        <strong>Monotony</strong> = how similar the daily loads are across the week (mean daily load ÷ standard deviation, 7-day basis with rest days as 0). A high value means the player trained at almost the same load every day.
-        <strong>Strain</strong> = weekly load × monotony — the total stress that built up that week.
-        <br><strong>Why?</strong> Foster found that weeks with high monotony and strain tend to come right before illness, injury and overtraining — even when the total weekly load looks perfectly normal. Strain is coloured by how much it changed versus the same player's previous week (▲ rising = building stress, ▼ falling = deload).
-        <br><strong>Eccentric Load</strong> = weighted count of high-intensity decelerations (zone 4×1 + zone 5×2 + zone 6×3) — the braking/eccentric actions most linked to muscle damage. Default metric; switch with the Load-metric pills.
+        <strong>What this shows.</strong> Training Monotony &amp; Strain (Foster) flags weeks where the <em>pattern</em> of load — not just the total — raises the risk of illness, injury and overreaching. Shown per player for the selected week, across the combined club + national-team load.
+        <br><strong>Daily load used here.</strong> The default metric is <strong>Eccentric Load</strong> — a weighted count of high-intensity decelerations (zone 4×1 + zone 5×2 + zone 6×3), the braking/eccentric actions most linked to muscle damage. Each day's load = the individual training drills, and on match days the 1st + 2nd half only (the Entire Session rollup and the 15-min blocks are excluded, so nothing is double-counted). Switch the metric (TD / HSR / Acc / Dec) with the pills.
+        <br><strong>The numbers.</strong> <strong>Monotony</strong> = mean daily load ÷ standard deviation across the week (7-day basis, rest days count as 0) — a high value means the player trained at almost the same load every day. <strong>Strain</strong> = weekly load × monotony — the total accumulated stress. The <strong>7-day sparkline</strong> shows the daily loads Mon→Sun (an empty bar is a rest day). <strong>Strain vs prev</strong> compares this week's strain with the player's previous week (▲ rising = building stress, ▼ falling = deload).
+        <br><strong>Why it matters.</strong> Foster found that weeks with high monotony and high strain tend to precede illness and injury even when the weekly total looks normal — variety and well-placed rest days protect the player. Monotony is unit-independent, so the thresholds below apply to any load metric.
+        <br><strong>Advisory.</strong> Decision-support for the staff, not an automatic rule — read it alongside the ACWR and Camp arrival cards.
         <div class="mono-legend">
           <span class="mono-legend-pill"><span class="mono-dot" style="background:#2D9B3F"></span>Monotony &lt; 1.5 — good variation</span>
           <span class="mono-legend-pill"><span class="mono-dot" style="background:#E07B1F"></span>1.5–<span id="legMonoHighA">2.0</span> — monitor</span>
@@ -2951,7 +2959,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
       <div id="ppCross"></div>
     </div>
     <div class="pp-table-wrap" style="padding-top:0;padding-bottom:6px" id="ppLoadWrap">
-      <div class="pp-table-title">Load by source \u00B7 last 28 days</div>
+      <div class="pp-table-title">Load by source · last 28 days</div>
       <div id="ppLoad"></div>
     </div>
     <div class="pp-table-wrap" style="padding-top:16px;padding-bottom:4px" id="ppPosWrap">
