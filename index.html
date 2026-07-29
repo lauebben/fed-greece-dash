@@ -2988,7 +2988,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
 <style>
 .hp-panel{max-width:1200px}
 .hp-grid{display:grid;grid-template-columns:1fr;gap:16px;padding:8px 2px 10px}
-.hp-chartcard{background:#0E2A55;border:1px solid #1E4E8C;border-radius:10px;padding:10px 10px 6px}
+.hp-chartcard{background:#0E2A55;border:1px solid #1E4E8C;border-radius:10px;padding:10px 10px 6px;min-width:0}
 .hp-ctitle{font-size:12px;font-weight:700;color:#EAF2FF;margin-bottom:4px}
 .hp-svg{display:block;height:auto}
 .hp-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;max-width:100%;-webkit-overflow-scrolling:touch}
@@ -8389,7 +8389,7 @@ function hpFmtDate(iso){ var p=String(iso).split('-'); return (+p[2])+'/'+(+p[1]
 function hpLineSVG(dates, series){
   var W=Math.max(720, dates.length*60),H=232, mL=44, mR=48, mT=16, mB=28;
   var iw=W-mL-mR, ih=H-mT-mB, n=dates.length;
-  if(n===0) return '<div class="empty-state" style="padding:16px">Geen data.</div>';
+  if(n===0) return '<div class="empty-state" style="padding:16px">No data.</div>';
   var xs=function(i){ return mL + (n===1? iw/2 : i/(n-1)*iw); };
   function scale(ax){
     var vals=[]; series.forEach(function(s){ if((s.axis||0)===ax) s.vals.forEach(function(v){ if(Number.isFinite(v)) vals.push(v); }); });
@@ -8413,7 +8413,7 @@ function hpLineSVG(dates, series){
     g+='<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" fill="none" stroke="'+s.color+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
     pts.forEach(function(p){ g+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.3" fill="'+s.color+'"/>'; });
   });
-  var leg=series.map(function(s){ return '<span class="hp-leg"><span class="hp-dot" style="background:'+s.color+'"></span>'+monoEsc(s.name)+((s.axis||0)===1?' (rechter-as)':'')+'</span>'; }).join('');
+  var leg=series.map(function(s){ return '<span class="hp-leg"><span class="hp-dot" style="background:'+s.color+'"></span>'+monoEsc(s.name)+((s.axis||0)===1?' (right axis)':'')+'</span>'; }).join('');
   return '<div class="hp-scroll"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" class="hp-svg" style="width:'+W+'px;height:'+H+'px;display:block" role="img">'+g+'</svg></div><div class="hp-legend">'+leg+'</div>';
 }
 
@@ -8426,29 +8426,29 @@ function openHealthModal(player){
   var dates=Object.keys(set).sort();
   document.getElementById('hpName').textContent=player;
   document.getElementById('hpSub').textContent = dates.length
-     ? (dates.length+' dagen · '+hpFmtDate(dates[0])+' – '+hpFmtDate(dates[dates.length-1]))
-     : 'Geen health-data voor deze speler';
+     ? (dates.length+' days · '+hpFmtDate(dates[0])+' – '+hpFmtDate(dates[dates.length-1]))
+     : 'No health data for this player';
   var col=function(map,field){ return dates.map(function(dt){ var o=map[dt]; return o&&Number.isFinite(o[field])?o[field]:null; }); };
   var readiness=dates.map(function(dt){ var o=d.w[dt]; if(!o) return null; var r=(o.readiness!=null)?o.readiness:o.readiness_est; return Number.isFinite(r)?r:null; });
   var html='';
   if(!dates.length){
-    html='<div class="empty-state" style="padding:24px">Nog geen wellness/RPE/vitals voor '+monoEsc(player)+'.</div>';
+    html='<div class="empty-state" style="padding:24px">No wellness/RPE/vitals yet for '+monoEsc(player)+'.</div>';
   } else {
-    html+=hpCard('Wellness — readiness & subjectief', hpLineSVG(dates,[
+    html+=hpCard('Wellness — readiness & subjective', hpLineSVG(dates,[
       {name:'Readiness',color:'#5EAAFF',axis:0,vals:readiness},
       {name:'Sleep',color:'#63C79A',axis:1,vals:col(d.w,'sleep')},
       {name:'Mood',color:'#E0B341',axis:1,vals:col(d.w,'mood')},
       {name:'Energy',color:'#C77FD8',axis:1,vals:col(d.w,'energy')}
     ]));
-    html+=hpCard('Belasting — s:RPE & RPE', hpLineSVG(dates,[
+    html+=hpCard('Load — s:RPE & RPE', hpLineSVG(dates,[
       {name:'s:RPE (load)',color:'#EF9F27',axis:0,vals:col(d.r,'srpe')},
       {name:'RPE',color:'#9AC0E8',axis:1,vals:col(d.r,'rpe')}
     ]));
-    html+=hpCard('Vitals — HRV & rusthartslag', hpLineSVG(dates,[
+    html+=hpCard('Vitals — HRV & resting HR', hpLineSVG(dates,[
       {name:'HRV',color:'#5EAAFF',axis:0,vals:col(d.v,'hrv')},
       {name:'RHR',color:'#E24B4A',axis:1,vals:col(d.v,'rhr')}
     ]));
-    html+=hpCard('HRV × ademhalingsfrequentie', hpLineSVG(dates,[
+    html+=hpCard('HRV × respiratory rate', hpLineSVG(dates,[
       {name:'HRV',color:'#5EAAFF',axis:0,vals:col(d.v,'hrv')},
       {name:'Resp. rate',color:'#63C79A',axis:1,vals:col(d.v,'rr')}
     ]));
