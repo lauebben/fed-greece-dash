@@ -2991,7 +2991,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
 .hp-chartcard{background:#0E2A55;border:1px solid #1E4E8C;border-radius:10px;padding:10px 10px 6px}
 .hp-ctitle{font-size:12px;font-weight:700;color:#EAF2FF;margin-bottom:4px}
 .hp-svg{display:block;height:auto}
-.hp-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.hp-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:6px;max-width:100%;-webkit-overflow-scrolling:touch}
 .hp-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;font-size:10px;color:#9DB9E6}
 .hp-leg{display:inline-flex;align-items:center;gap:4px}
 .hp-dot{width:10px;height:3px;border-radius:2px;display:inline-block}
@@ -8387,7 +8387,7 @@ function hpFmtDate(iso){ var p=String(iso).split('-'); return (+p[2])+'/'+(+p[1]
 
 /* Multi-line SVG met optionele rechter-as (dual axis). */
 function hpLineSVG(dates, series){
-  var W=Math.max(720, dates.length*44),H=232, mL=44, mR=48, mT=16, mB=28;
+  var W=Math.max(720, dates.length*60),H=232, mL=44, mR=48, mT=16, mB=28;
   var iw=W-mL-mR, ih=H-mT-mB, n=dates.length;
   if(n===0) return '<div class="empty-state" style="padding:16px">Geen data.</div>';
   var xs=function(i){ return mL + (n===1? iw/2 : i/(n-1)*iw); };
@@ -8414,7 +8414,7 @@ function hpLineSVG(dates, series){
     pts.forEach(function(p){ g+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.3" fill="'+s.color+'"/>'; });
   });
   var leg=series.map(function(s){ return '<span class="hp-leg"><span class="hp-dot" style="background:'+s.color+'"></span>'+monoEsc(s.name)+((s.axis||0)===1?' (rechter-as)':'')+'</span>'; }).join('');
-  return '<div class="hp-scroll"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" class="hp-svg" role="img">'+g+'</svg></div><div class="hp-legend">'+leg+'</div>';
+  return '<div class="hp-scroll"><svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" class="hp-svg" style="width:'+W+'px;height:'+H+'px;display:block" role="img">'+g+'</svg></div><div class="hp-legend">'+leg+'</div>';
 }
 
 function hpCard(title,svg){ return '<div class="hp-chartcard"><div class="hp-ctitle">'+monoEsc(title)+'</div>'+svg+'</div>'; }
