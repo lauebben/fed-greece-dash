@@ -7485,29 +7485,39 @@ function renderMorningOverview(){
   var wrap=document.getElementById('moWrapper'); if(!wrap) return;
   var rows=campArrivalBuild(); // al gesorteerd op risico (CAMP_CAT.ord)
   var cnt={attention:0,monitor:0,good:0,nodata:0};
-  rows.forEach(function(r){ var st=MO_STATUS[r.cat]||MO_STATUS.na; cnt[st.light]++; });
-  var h='<table class="dr-table"><thead><tr><th>Player</th><th>Status</th><th>Rdy</th><th>ACWR</th><th>CMJ \u0394</th><th>Sore</th><th>Last match</th><th>Signal</th></tr></thead><tbody>';
+  rows.forEach(function(r){ cnt[(MO_STATUS[r.cat]||MO_STATUS.na).light]++; });
+  function tint(hex,al){ try{ return pxHexToRgba(hex,al); }catch(e){ return hex; } }
+  function pill(txt,color){ return '<span style="display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700;background:'+tint(color,0.16)+';color:'+color+';border:1px solid '+tint(color,0.42)+'">'+txt+'</span>'; }
+  function rdyBar(v){
+    if(v==null) return '<span style="color:#9DB9E6">—</span>';
+    var c=moRdyC(v), w=Math.max(4,Math.min(100,Math.round(v)));
+    return '<div style="display:inline-flex;align-items:center;gap:7px">'
+      +'<div style="width:44px;height:7px;border-radius:4px;background:rgba(255,255,255,0.10);overflow:hidden">'
+      +'<div style="width:'+w+'%;height:100%;background:'+c+';border-radius:4px"></div></div>'
+      +'<span style="color:'+c+';font-weight:700;font-size:12px">'+Math.round(v)+'</span></div>';
+  }
+  var h='<table class="dr-table mo-table"><thead><tr><th>Player</th><th>Status</th><th>Readiness</th><th>ACWR</th><th>CMJ Δ</th><th>Sore</th><th>Last match</th><th>Signal</th></tr></thead><tbody>';
   rows.forEach(function(r){
     var st=MO_STATUS[r.cat]||MO_STATUS.na, cmj=moCmj(r.cmjTrend);
-    var lm=(r.lastMin!=null)?(r.lastMin+"' \u00b7 "+(r.daysSince!=null?r.daysSince+'d':'—')):'—';
-    h+='<tr>'
-      +'<td class="pl-name">'+monoEsc(r.player)+acwrClubHtml(r.player)+healthBtn(r.player)+'</td>'
-      +'<td style="white-space:nowrap"><span class="mo-dot" style="background:'+st.color+'"></span><span style="color:'+st.color+';font-weight:700">'+st.label+'</span></td>'
-      +'<td style="text-align:center;font-weight:700;color:'+moRdyC(r.readiness)+'">'+(r.readiness!=null?Math.round(r.readiness):'—')+'</td>'
-      +'<td style="text-align:center;font-weight:700;color:'+moAcwrC(r.acwr)+'">'+(r.acwr!=null?r.acwr.toFixed(2):'—')+'</td>'
-      +'<td style="text-align:center;color:'+cmj.c+'">'+cmj.t+'</td>'
-      +'<td style="text-align:center;color:'+moSoreC(r.soreness)+'">'+(r.soreness!=null?r.soreness:'—')+'</td>'
-      +'<td style="text-align:center;color:#9DB9E6;white-space:nowrap">'+lm+'</td>'
-      +'<td style="color:#c3d4ee">'+monoEsc(st.sig)+'</td>'
+    var arrow=(r.cmjTrend==null)?'':(r.cmjTrend>0?'▲ ':(r.cmjTrend<0?'▼ ':''));
+    var lm=(r.lastMin!=null)?(r.lastMin+"' · "+(r.daysSince!=null?r.daysSince+'d':'—')):'—';
+    h+='<tr style="background:'+tint(st.color,0.09)+'">'
+      +'<td class="pl-name" style="box-shadow:inset 4px 0 0 '+st.color+'">'+monoEsc(r.player)+acwrClubHtml(r.player)+healthBtn(r.player)+'</td>'
+      +'<td style="white-space:nowrap">'+pill(st.label,st.color)+'</td>'
+      +'<td style="text-align:center">'+rdyBar(r.readiness)+'</td>'
+      +'<td style="text-align:center">'+(r.acwr!=null?pill(r.acwr.toFixed(2),moAcwrC(r.acwr)):'<span style="color:#9DB9E6">—</span>')+'</td>'
+      +'<td style="text-align:center;color:'+cmj.c+';font-weight:600">'+arrow+cmj.t+'</td>'
+      +'<td style="text-align:center">'+(r.soreness!=null?pill(String(r.soreness),moSoreC(r.soreness)):'<span style="color:#9DB9E6">—</span>')+'</td>'
+      +'<td style="text-align:center;color:#9DB9E6;white-space:nowrap;font-size:12px">'+lm+'</td>'
+      +'<td style="color:#EAF2FF;font-weight:600">'+monoEsc(st.sig)+'</td>'
       +'</tr>';
   });
   h+='</tbody></table>';
   wrap.innerHTML=h;
   var meta=document.getElementById('moMeta');
-  if(meta) meta.innerHTML='<strong>Ending '+monoEsc(formatDateShort(state.selectedDate))+'</strong> \u00b7 '
-    +'<span style="color:#E24B4A;font-weight:700">'+cnt.attention+' attention</span> \u00b7 '
-    +'<span style="color:#E0A100;font-weight:700">'+cnt.monitor+' monitor</span> \u00b7 '
-    +'<span style="color:#7FBF57;font-weight:700">'+cnt.good+' good</span>';
+  function cpill(n,txt,color){ return '<span style="display:inline-block;padding:2px 10px;border-radius:11px;font-size:11px;font-weight:800;background:'+tint(color,0.18)+';color:'+color+';border:1px solid '+tint(color,0.45)+';margin-left:5px">'+n+' '+txt+'</span>'; }
+  if(meta) meta.innerHTML='<span style="color:#9DB9E6">Ending '+monoEsc(formatDateShort(state.selectedDate))+'</span>'
+    +cpill(cnt.attention,'attention','#E24B4A')+cpill(cnt.monitor,'monitor','#E0A100')+cpill(cnt.good,'good','#7FBF57');
 }
 
 function renderAcwr() {
