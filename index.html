@@ -2540,6 +2540,24 @@ html, body{ background:#071A3A !important; color:var(--text); }
          Thresholds: <0.8 underload · 0.8–1.3 sweet spot ·
          1.3–1.5 caution · >1.5 high risk (Gabbett).
          ============================================================ -->
+    <div class="table-card" id="morningOverviewCard">
+      <div class="table-header">
+        <div>
+          <div class="table-title">Morning overview — who needs attention</div>
+          <div class="table-subtitle">Squad-wide status on the selected date · sorted by risk · advisory — staff decides</div>
+        </div>
+        <div class="table-meta" id="moMeta">—</div>
+      </div>
+      <div class="table-wrap"><div class="table-inner" id="moWrapper"><div class="empty-state">Loading…</div></div></div>
+      <div class="acwr-explain">
+        <span class="mo-dot" style="background:#E24B4A"></span> Attention — act today &nbsp;
+        <span class="mo-dot" style="background:#E0A100"></span> Monitor &nbsp;
+        <span class="mo-dot" style="background:#7FBF57"></span> Good &nbsp;
+        <span class="mo-dot" style="background:#9DB9E6"></span> No data
+        <div style="margin-top:6px">Combines ACWR, readiness, CMJ trend, soreness, return-to-play and last match into one status. Click a player for the full profile · ♥ for health trends.</div>
+      </div>
+    </div>
+
     <div class="table-card acwr-card" id="acwrCard">
       <div class="table-header">
         <div>
@@ -2995,6 +3013,7 @@ html, body{ background:#071A3A !important; color:var(--text); }
 .hp-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:10px;color:#9DB9E6;clear:both}
 .hp-leg{display:inline-flex;align-items:center;gap:4px}
 .hp-dot{width:10px;height:3px;border-radius:2px;display:inline-block}
+.mo-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
 .hp-btn{margin-left:6px;background:transparent;border:none;color:#E24B4A;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;vertical-align:middle}
 .hp-btn:hover{color:#ff7a7a}
 .pp-health-btn{background:#0A2E5C;border:1px solid #4C8FD6;color:#fff;border-radius:12px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-right:8px}
@@ -4491,6 +4510,10 @@ function render() {
   // Render the Daily Stress card — uses the same builders so it stays in sync.
   // (renderDailyStress also refreshes the alert bar with its rows.)
   renderDailyStress();
+
+  // Morning overview — squad-wide traffic-light board (top card).
+  try { renderMorningOverview(); }
+  catch (e) { console.error('Morning overview render failed:', e); }
 
   // Keep the ACWR card in sync with the Drill Date filter.
   try { renderAcwr(); }
@@ -7423,7 +7446,7 @@ function campArrivalPlayer(p,a){
   else if((readiness!=null&&readiness<55)||(cmjTrend!=null&&cmjTrend<-5)||(soreness!=null&&soreness>=3))cat='fatigue';
   else if(acwr<under)cat='under';
   else cat='ok';
-  return {player:p,position:(a&&a.position)||'',acwr:acwr,trainDays:trainDays,lastMin:lastMin,daysSince:daysSince,readiness:readiness,cmjTrend:cmjTrend,cat:cat};
+  return {player:p,position:(a&&a.position)||'',acwr:acwr,trainDays:trainDays,lastMin:lastMin,daysSince:daysSince,readiness:readiness,cmjTrend:cmjTrend,soreness:soreness,cat:cat};
 }
 function campArrivalBuild(){var acwr=acwrBuildRows('td'),out=[];acwr.forEach(function(a){out.push(campArrivalPlayer(a.player,a));});out.sort(function(x,y){return CAMP_CAT[x.cat].ord-CAMP_CAT[y.cat].ord||(x.player<y.player?-1:1);});return out;}
 function renderCampArrival(){
@@ -7444,6 +7467,47 @@ function renderCampArrival(){
   h+='</tbody></table>';wrap.innerHTML=h;
   var leg=document.getElementById('campLegend');
   if(leg)leg.innerHTML='<div class="acwr-legend">'+Object.keys(CAMP_CAT).map(function(k){var c=CAMP_CAT[k];return '<span class="mono-legend-pill"><span class="mono-dot" style="background:'+c.color+'"></span>'+monoEsc(c.label)+'</span>';}).join('')+'</div><div style="margin-top:8px">MD-3/-2/-1 = suggested adjustment vs the standard squad session for that day. Advisory only \u2014 staff sets thresholds and can override; RTP flags need medical sign-off.</div>';
+}
+
+var MO_STATUS={
+  over:{light:'attention',color:'#E24B4A',label:'Attention',sig:'High load — taper'},
+  fatigue:{light:'attention',color:'#E24B4A',label:'Attention',sig:'Low readiness / CMJ drop'},
+  rtp:{light:'attention',color:'#E24B4A',label:'Attention',sig:'Return-to-play — build up'},
+  under:{light:'monitor',color:'#E0A100',label:'Monitor',sig:'Underloaded — top-up'},
+  ok:{light:'good',color:'#7FBF57',label:'Good',sig:'Maintain'},
+  na:{light:'nodata',color:'#9DB9E6',label:'No data',sig:'Insufficient data'}
+};
+function moRdyC(v){ if(v==null)return '#9DB9E6'; if(v<55)return '#E24B4A'; if(v<65)return '#E0A100'; return '#cfe0f5'; }
+function moAcwrC(v){ if(v==null)return '#9DB9E6'; if(v>1.5)return '#E24B4A'; if(v>1.3||v<0.8)return '#E0A100'; return '#cfe0f5'; }
+function moCmj(v){ if(v==null)return {t:'—',c:'#9DB9E6'}; return {t:(v>=0?'+':'')+Math.round(v)+'%', c:(v<=-5?'#E24B4A':'#cfe0f5')}; }
+function moSoreC(v){ if(v==null)return '#9DB9E6'; if(v>=4)return '#E24B4A'; if(v>=3)return '#E0A100'; return '#cfe0f5'; }
+function renderMorningOverview(){
+  var wrap=document.getElementById('moWrapper'); if(!wrap) return;
+  var rows=campArrivalBuild(); // al gesorteerd op risico (CAMP_CAT.ord)
+  var cnt={attention:0,monitor:0,good:0,nodata:0};
+  rows.forEach(function(r){ var st=MO_STATUS[r.cat]||MO_STATUS.na; cnt[st.light]++; });
+  var h='<table class="dr-table"><thead><tr><th>Player</th><th>Status</th><th>Rdy</th><th>ACWR</th><th>CMJ \u0394</th><th>Sore</th><th>Last match</th><th>Signal</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var st=MO_STATUS[r.cat]||MO_STATUS.na, cmj=moCmj(r.cmjTrend);
+    var lm=(r.lastMin!=null)?(r.lastMin+"' \u00b7 "+(r.daysSince!=null?r.daysSince+'d':'—')):'—';
+    h+='<tr>'
+      +'<td class="pl-name">'+monoEsc(r.player)+acwrClubHtml(r.player)+healthBtn(r.player)+'</td>'
+      +'<td style="white-space:nowrap"><span class="mo-dot" style="background:'+st.color+'"></span><span style="color:'+st.color+';font-weight:700">'+st.label+'</span></td>'
+      +'<td style="text-align:center;font-weight:700;color:'+moRdyC(r.readiness)+'">'+(r.readiness!=null?Math.round(r.readiness):'—')+'</td>'
+      +'<td style="text-align:center;font-weight:700;color:'+moAcwrC(r.acwr)+'">'+(r.acwr!=null?r.acwr.toFixed(2):'—')+'</td>'
+      +'<td style="text-align:center;color:'+cmj.c+'">'+cmj.t+'</td>'
+      +'<td style="text-align:center;color:'+moSoreC(r.soreness)+'">'+(r.soreness!=null?r.soreness:'—')+'</td>'
+      +'<td style="text-align:center;color:#9DB9E6;white-space:nowrap">'+lm+'</td>'
+      +'<td style="color:#c3d4ee">'+monoEsc(st.sig)+'</td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+  var meta=document.getElementById('moMeta');
+  if(meta) meta.innerHTML='<strong>Ending '+monoEsc(formatDateShort(state.selectedDate))+'</strong> \u00b7 '
+    +'<span style="color:#E24B4A;font-weight:700">'+cnt.attention+' attention</span> \u00b7 '
+    +'<span style="color:#E0A100;font-weight:700">'+cnt.monitor+' monitor</span> \u00b7 '
+    +'<span style="color:#7FBF57;font-weight:700">'+cnt.good+' good</span>';
 }
 
 function renderAcwr() {
